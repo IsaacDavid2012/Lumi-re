@@ -1,0 +1,10 @@
+data/
+*.db
+*.db-wal
+*.db-shm
+*.db.tmp
+__pycache__/
+.git/
+.env
+.env.*
+*.log

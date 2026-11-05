@@ -1,0 +1,74 @@
+{
+  "name": "lumiere-desktop",
+  "productName": "Lumière",
+  "version": "1.0.0",
+  "description": "Lumière — private cinema streaming, as a desktop app.",
+  "author": "Creative Clicks <hello@creativeclicks.art>",
+  "main": "main.js",
+  "private": true,
+  "scripts": {
+    "start": "electron .",
+    "dist:win": "electron-builder --win --x64",
+    "dist:mac": "electron-builder --mac --universal",
+    "dist:linux": "electron-builder --linux --x64"
+  },
+  "devDependencies": {
+    "electron": "^33.2.0",
+    "electron-builder": "^25.1.8"
+  },
+  "build": {
+    "appId": "art.creativeclicks.lumiere",
+    "productName": "Lumière",
+    "artifactName": "Lumiere-${version}-${os}-${arch}.${ext}",
+    "copyright": "Copyright © Creative Clicks",
+    "directories": {
+      "output": "dist",
+      "buildResources": "build"
+    },
+    "files": [
+      "main.js",
+      "offline.html",
+      "build/icon.png"
+    ],
+    "asar": true,
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "build/icon.png",
+      "signAndEditExecutable": false
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Lumière"
+    },
+    "mac": {
+      "target": [
+        "dmg",
+        "zip"
+      ],
+      "icon": "build/icon.png",
+      "category": "public.app-category.entertainment",
+      "identity": null
+    },
+    "dmg": {
+      "title": "Install Lumière"
+    },
+    "linux": {
+      "target": [
+        "AppImage"
+      ],
+      "icon": "build/icon.png",
+      "category": "AudioVideo"
+    }
+  }
+}

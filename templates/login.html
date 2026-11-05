@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Lumière">
+  <meta name="format-detection" content="telephone=no">
+  <meta name="csrf-token" content="{{ csrf_token() }}">
+  <meta name="theme-color" content="#08090c">
+  <title>Sign In — {{ site_name }}</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="icon" type="image/x-icon" href="/favicon.ico" sizes="any">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <link rel="manifest" href="/site.webmanifest">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/css/style.css">
+</head>
+
+<body class="login-page">
+
+  <!-- Ambient Cinema Backdrop -->
+  <div class="login-backdrop" aria-hidden="true">
+    <div class="login-orb orb-1"></div>
+    <div class="login-orb orb-2"></div>
+    <div class="login-grid-overlay"></div>
+  </div>
+
+  <main class="login-container">
+    <div style="width: 100%; max-width: 440px; margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between;">
+      <a href="/" style="display: inline-flex; align-items: center; gap: 7px; color: var(--text-muted); font-size: 13.5px; font-weight: 500; text-decoration: none; transition: color 0.15s ease;">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+        <span>Back to Home</span>
+      </a>
+      <a href="/signup" style="color: var(--brand-bright); font-size: 13.5px; font-weight: 600; text-decoration: none;">Create Account</a>
+    </div>
+
+    <div class="login-card">
+      <div class="login-brand-header">
+        <a class="brand-lockup" href="/" aria-label="{{ site_name }} home">
+          <span class="brand-mark">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <polygon points="7 3.5 20.5 11.5 7 19.5 7 3.5"></polygon>
+              <rect x="5.5" y="20.5" width="13" height="2" rx="1"></rect>
+            </svg>
+          </span>
+          <span class="brand-logo-text">{{ site_name_upper }}</span>
+        </a>
+        <span class="security-pill">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+          </svg>
+          Protected Vault
+        </span>
+      </div>
+
+      <h1 class="login-title">Welcome back</h1>
+      <p class="login-subtitle">Sign in to browse 1.26M+ titles and stream in the clean {{ site_name }} player.</p>
+
+      {% if error %}
+      <div class="login-alert" role="alert">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="12" y1="8" x2="12" y2="12"></line>
+          <line x1="12" y1="16" x2="12.01" y2="16"></line>
+        </svg>
+        <span>{{ error }}</span>
+      </div>
+      {% endif %}
+
+      {% if notice %}
+      <div class="login-notice" role="status">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M20 6L9 17l-5-5"></path>
+        </svg>
+        <span>{{ notice }}</span>
+      </div>
+      {% endif %}
+
+      <form method="POST" action="/login" class="login-form" id="loginForm" novalidate>
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+        <div class="form-group">
+          <label for="username" class="form-label">Username</label>
+          <div class="input-wrapper">
+            <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+              <circle cx="12" cy="7" r="4"></circle>
+            </svg>
+            <input
+              id="username"
+              name="username"
+              type="text"
+              autocomplete="username"
+              autocapitalize="none"
+              autocorrect="off"
+              spellcheck="false"
+              required
+              autofocus
+              placeholder="Enter username"
+              value="{{ username or '' }}"
+              {% if locked %}disabled{% endif %}
+            >
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="password" class="form-label">Password</label>
+          <div class="input-wrapper">
+            <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+              <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+            </svg>
+            <input
+              id="password"
+              name="password"
+              type="password"
+              autocomplete="current-password"
+              required
+              placeholder="••••••••••••"
+              {% if locked %}disabled{% endif %}
+            >
+            <button type="button" class="password-toggle" id="togglePassword" aria-label="Show password">
+              <svg id="eyeIcon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                <circle cx="12" cy="12" r="3"></circle>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <div class="form-row-meta">
+          <label class="checkbox-label">
+            <input type="checkbox" name="remember" value="1" checked>
+            <span>Keep session active (12h)</span>
+          </label>
+          <span class="crypto-badge">scrypt + CSRF</span>
+        </div>
+
+        <button type="submit" class="btn-primary login-submit-btn" id="loginSubmitBtn" {% if locked %}disabled{% endif %}>
+          <span>Sign In to Vault</span>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+            <polyline points="12 5 19 12 12 19"></polyline>
+          </svg>
+        </button>
+      </form>
+
+      <div class="login-switch">
+        New to {{ site_name }}? <a href="/signup">Create an account</a>
+      </div>
+
+      <div class="login-footer-meta">
+        <a href="/terms" class="small-link">Terms of Service</a>
+        <span>•</span>
+        <a href="/terms#rules" class="small-link">Site Rules</a>
+        <span>•</span>
+        <a href="/privacy" class="small-link">Privacy Policy</a>
+      </div>
+    </div>
+  </main>
+
+  <script src="/static/js/login.js"></script>
+</body>
+
+</html>

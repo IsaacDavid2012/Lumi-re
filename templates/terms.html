@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Lumière">
+  <meta name="format-detection" content="telephone=no">
+  <meta name="theme-color" content="#08090c">
+  <title>Terms, Rules &amp; Privacy — {{ site_name }}</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="icon" type="image/x-icon" href="/favicon.ico" sizes="any">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <link rel="manifest" href="/site.webmanifest">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/css/style.css">
+</head>
+
+<body class="login-page">
+
+  <div class="login-backdrop" aria-hidden="true">
+    <div class="login-orb orb-1"></div>
+    <div class="login-orb orb-2"></div>
+    <div class="login-grid-overlay"></div>
+  </div>
+
+  <main class="login-container wide">
+    <div class="login-card account-card legal-card">
+      <div class="login-brand-header">
+        <a class="brand-lockup" href="/" aria-label="{{ site_name }}">
+          <span class="brand-mark">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <polygon points="7 3.5 20.5 11.5 7 19.5 7 3.5"></polygon>
+              <rect x="5.5" y="20.5" width="13" height="2" rx="1"></rect>
+            </svg>
+          </span>
+          <span class="brand-logo-text">{{ site_name_upper }}</span>
+        </a>
+        <div class="section-inline-actions">
+          {% if session.get('authenticated') %}
+          <a class="small-link" href="/account">Account</a>
+          <a class="small-link" href="/">Back to streaming</a>
+          {% else %}
+          <a class="small-link" href="/login">Sign in</a>
+          <a class="small-link" href="/signup">Create account</a>
+          {% endif %}
+        </div>
+      </div>
+
+      <span class="eyebrow">LEGAL &amp; PLATFORM GOVERNANCE</span>
+      <h1 class="login-title">Terms of Service, Rules &amp; Privacy Policy</h1>
+      <p class="login-subtitle">Effective Date: November 2026 · Please review these terms carefully before using {{ site_name }}.</p>
+
+      <nav class="legal-nav" aria-label="Legal sections">
+        <a href="#terms" class="filter-chip {{ 'active' if active_tab != 'privacy' else '' }}">1. Terms of Service</a>
+        <a href="#billing" class="filter-chip">2. Billing &amp; Cancellation ({{ subscription_price }}/mo)</a>
+        <a href="#rules" class="filter-chip">3. Site &amp; Account Rules</a>
+        <a href="#privacy" class="filter-chip {{ 'active' if active_tab == 'privacy' else '' }}">4. Privacy &amp; Security Policy</a>
+        <a href="#disclaimer" class="filter-chip">5. Content &amp; DMCA Disclaimer</a>
+      </nav>
+
+      <section id="terms" class="account-section legal-section">
+        <h2>1. Acceptance of Terms &amp; Eligibility</h2>
+        <p>By registering for an account, subscribing, or accessing <strong>{{ site_name }}</strong> ("the Service"), you agree to be bound by these Terms of Service, our Site Rules, and our Privacy Policy. If you do not agree to these terms, do not use the Service.</p>
+        <ul class="legal-list">
+          <li><strong>Age Requirement:</strong> You must be at least 18 years of age (or the age of legal majority in your jurisdiction) to create an account and enter into a recurring subscription agreement.</li>
+          <li><strong>Account Responsibility:</strong> You are solely responsible for maintaining the confidentiality of your username and password and for all activities that occur under your account.</li>
+          <li><strong>Service Availability:</strong> {{ site_name }} is provided on an "as-is" and "as-available" basis. Features, catalog metadata, and availability may change at any time without prior notice.</li>
+        </ul>
+      </section>
+
+      <section id="billing" class="account-section legal-section">
+        <h2>2. Subscription Billing, Auto-Renewal &amp; Cancellation</h2>
+        <p>Access to the {{ site_name }} streaming catalog requires an active monthly membership unless your account has been explicitly granted complimentary access by an administrator.</p>
+        <ul class="legal-list">
+          <li><strong>Monthly Membership Fee:</strong> Membership is billed at <strong>{{ subscription_price }} per month</strong> (Malaysian Ringgit, MYR) via Stripe Checkout.</li>
+          <li><strong>Automatic Renewal:</strong> Your subscription automatically renews each month on your billing anniversary date unless you cancel prior to the renewal date. By subscribing, you authorize Stripe to charge your selected payment method {{ subscription_price }} each billing cycle.</li>
+          <li><strong>1-Click Cancellation:</strong> You may cancel your subscription at any time in <strong>Account Settings (`/account`)</strong> via the <em>Cancel at period end</em> button or through the <em>Stripe Billing Portal</em>. When you cancel, your membership remains active until the end of your current paid billing period, and you will not be charged again.</li>
+          <li><strong>Refund Policy:</strong> Membership fees are non-refundable and there are no refunds or credits for partially used billing periods, unwatched periods, or accidental renewals. If you believe a billing error has occurred, contact the platform administrator promptly.</li>
+          <li><strong>Failed Payments:</strong> If a recurring payment fails or is disputed, access to the streaming catalog is automatically suspended until payment is resolved.</li>
+        </ul>
+      </section>
+
+      <section id="rules" class="account-section legal-section">
+        <h2>3. Mandatory Site &amp; Account Rules</h2>
+        <p>To keep {{ site_name }} fast, secure, and reliable for all members, every user must follow these strict platform rules. Violation of any rule may result in immediate session revocation and permanent account termination without refund:</p>
+        <ul class="legal-list">
+          <li><strong>Personal Use Only (No Account Sharing or Resale):</strong> Your account is personal to you and your immediate household. Publicly posting, selling, renting, or sharing your login credentials with outside individuals is strictly prohibited.</li>
+          <li><strong>No Automated Scraping or Bots:</strong> Using crawlers, scrapers, headless browsers, automated scripts, or bulk API harvesters against {{ site_name }} endpoints (`/api/*`) is forbidden.</li>
+          <li><strong>No Security Circumvention:</strong> Attempting to bypass authentication, rate limits, CSRF protections, session bindings, or Stripe payment verification will result in an automatic IP lockout and permanent ban.</li>
+          <li><strong>No Redistribution or Commercial Restreaming:</strong> You may not record, rebroadcast, publicly exhibit, or commercially redistribute any streams or metadata accessed through the Service.</li>
+        </ul>
+      </section>
+
+      <section id="privacy" class="account-section legal-section">
+        <h2>4. Privacy, Data Protection &amp; Cookie Policy</h2>
+        <p>We design {{ site_name }} with a strict data-minimization and zero-trust security architecture:</p>
+        <ul class="legal-list">
+          <li><strong>Account &amp; Authentication Data:</strong> We store your chosen username and a salted <code>scrypt</code> cryptographic hash of your password. We never store plaintext passwords and do not require your personal name or home address to register.</li>
+          <li><strong>Payment Security (Stripe PCI-DSS Level 1):</strong> All payment transactions are processed directly by <strong>Stripe</strong> on Stripe-hosted checkout pages. {{ site_name }} <strong>never</strong> sees, processes, or stores your credit/debit card numbers, CVV, or bank credentials—only your Stripe Customer ID, Subscription ID, and billing status.</li>
+          <li><strong>Watch History &amp; Activity Logs:</strong> Your "Continue Watching" progress is stored privately per account so you can resume playback. You can clear your watch history at any time in 1 click from <strong>Account Settings</strong>.</li>
+          <li><strong>Security Audit Logs:</strong> To protect against brute-force attacks and unauthorized access, we log sign-in events, IP addresses, and browser user-agent fingerprints in a bounded security audit log.</li>
+          <li><strong>Essential Cookies Only:</strong> We use a single cryptographically signed, <code>HttpOnly</code>, <code>SameSite=Lax</code> session cookie (<code>lumiere_session</code>) for authentication and CSRF protection. We do not use third-party advertising trackers.</li>
+          <li><strong>Right to Erasure (Account Deletion):</strong> You can permanently delete your account and all associated watch history at any time from <strong>Account Settings (`/account`)</strong>.</li>
+        </ul>
+      </section>
+
+      <section id="disclaimer" class="account-section legal-section">
+        <h2>5. Content Disclaimer, TMDB Attribution &amp; Governing Law</h2>
+        <ul class="legal-list">
+          <li><strong>Metadata Attribution:</strong> This product uses the TMDB API but is not endorsed or certified by TMDB. All movie and series posters, backdrops, titles, and synopses are property of their respective copyright owners.</li>
+          <li><strong>Third-Party Player Embeds:</strong> {{ site_name }} operates as a catalog discovery and indexing front end. Media streams are served by third-party embed providers (such as VidFast) and are not hosted on {{ site_name }} servers.</li>
+          <li><strong>Limitation of Liability:</strong> To the maximum extent permitted by applicable law, {{ site_name }} and its operators shall not be liable for any indirect, incidental, consequential, or special damages arising out of or in connection with your use of the Service, with total liability capped at the amount you paid for the Service in the preceding one (1) month ({{ subscription_price }}).</li>
+          <li><strong>Governing Law:</strong> These Terms shall be governed by and construed in accordance with the laws of <strong>Malaysia</strong>.</li>
+        </ul>
+      </section>
+
+      <div class="login-footer-meta">
+        <span>{{ site_name }} Legal &amp; Compliance</span>
+        <span>•</span>
+        <span>{{ subscription_price }}/month MYR</span>
+        <span>•</span>
+        <a href="/login" class="small-link">Return to {{ site_name }}</a>
+      </div>
+    </div>
+  </main>
+
+</body>
+
+</html>

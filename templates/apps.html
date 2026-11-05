@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Lumière">
+  <meta name="format-detection" content="telephone=no">
+  <meta name="theme-color" content="#08090c">
+  <title>Get Lumière Apps — Android, Windows, Mac &amp; iOS</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="icon" type="image/x-icon" href="/favicon.ico" sizes="any">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <link rel="manifest" href="/site.webmanifest">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/css/style.css">
+  <style>
+    .apps-hero {
+      text-align: center;
+      margin-bottom: 36px;
+    }
+    .apps-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 20px;
+      margin-bottom: 32px;
+    }
+    .app-card {
+      background: rgba(18, 22, 32, 0.9);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-lg);
+      padding: 24px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
+    }
+    .app-card:hover {
+      transform: translateY(-2px);
+      border-color: rgba(229, 9, 20, 0.5);
+      box-shadow: 0 16px 36px rgba(0, 0, 0, 0.5);
+    }
+    .app-card-head {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .app-icon-wrap {
+      width: 52px;
+      height: 52px;
+      border-radius: 14px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--line-bright);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      flex-shrink: 0;
+    }
+    .app-card-title {
+      margin: 0;
+      font-size: 19px;
+      font-weight: 700;
+      color: #fff;
+    }
+    .app-card-badge {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 700;
+      color: #fca5a5;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-top: 2px;
+    }
+    .app-card-features {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      font-size: 13px;
+      color: var(--text-soft);
+      flex: 1;
+    }
+    .app-card-features li {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+    }
+    .app-card-features svg {
+      flex-shrink: 0;
+      color: var(--brand);
+      margin-top: 2px;
+    }
+    .app-card-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      padding-top: 8px;
+      border-top: 1px solid var(--line);
+    }
+    .app-btn-download {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      width: 100%;
+      padding: 13px 20px;
+      border-radius: var(--radius-sm);
+      background: var(--brand);
+      color: #fff;
+      font-weight: 700;
+      font-size: 14.5px;
+      text-decoration: none;
+      transition: background 0.16s ease, transform 0.16s ease;
+      box-shadow: 0 4px 16px rgba(229, 9, 20, 0.35);
+    }
+    .app-btn-download:hover {
+      background: #c10710;
+      transform: translateY(-1px);
+    }
+    .app-sub-action {
+      text-align: center;
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+    .app-sub-action a {
+      color: var(--text-soft);
+      text-decoration: underline;
+    }
+    .ios-steps {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-sm);
+      padding: 14px;
+      font-size: 12.5px;
+      color: var(--text);
+    }
+    .ios-step {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+    }
+    .step-num {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: var(--brand);
+      color: #fff;
+      font-weight: 800;
+      font-size: 11px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+  </style>
+</head>
+
+<body class="login-page">
+
+  <div class="login-backdrop" aria-hidden="true">
+    <div class="login-orb orb-1"></div>
+    <div class="login-orb orb-2"></div>
+    <div class="login-grid-overlay"></div>
+  </div>
+
+  <main class="login-container wide">
+    <div class="login-card account-card">
+      <div class="login-brand-header">
+        <a class="brand-lockup" href="/" aria-label="Back to Lumière">
+          <span class="brand-mark">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <polygon points="7 3.5 20.5 11.5 7 19.5 7 3.5"></polygon>
+              <rect x="5.5" y="20.5" width="13" height="2" rx="1"></rect>
+            </svg>
+          </span>
+          <span class="brand-logo-text">LUMIÈRE</span>
+        </a>
+        <a class="small-link" href="/">Back to streaming</a>
+      </div>
+
+      <div class="apps-hero">
+        <h1 class="login-title">Install Lumière on All Your Devices</h1>
+        <p class="login-subtitle">Enjoy private cinema streaming with native fullscreen, keyboard controls, subtitle support, and instant resume.</p>
+      </div>
+
+      <div class="apps-grid">
+        <!-- Android APK -->
+        <article class="app-card">
+          <div class="app-card-head">
+            <div class="app-icon-wrap" aria-hidden="true">
+              <svg width="30" height="30" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M17.523 15.3414c-.5511 0-.9993-.4486-.9993-1.0003 0-.5512.4482-1.0003.9993-1.0003.5524 0 1.0005.4491 1.0005 1.0003 0 .5517-.4481 1.0003-1.0005 1.0003m-11.046 0c-.5511 0-.9993-.4486-.9993-1.0003 0-.5512.4482-1.0003.9993-1.0003.5524 0 1.0005.4491 1.0005 1.0003 0 .5517-.4481 1.0003-1.0005 1.0003m11.4045-6.02l1.9973-3.4592a.416.416 0 00-.1521-.5676.416.416 0 00-.5676.1521l-2.0223 3.503C15.5902 8.4065 13.8533 8.0818 12 8.0818c-1.8532 0-3.59.3247-5.1368.8679L4.8409 5.4467a.4161.4161 0 00-.5677-.1521.4157.4157 0 00-.1521.5676l1.9973 3.4592C2.6889 11.1867.3432 14.6589 0 18.761h24c-.3432-4.1021-2.6889-7.5743-6.1185-9.4396"/>
+              </svg>
+            </div>
+            <div>
+              <h2 class="app-card-title">Android</h2>
+              <span class="app-card-badge">Native APK • Android 7.0+</span>
+            </div>
+          </div>
+          <ul class="app-card-features">
+            <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> Fullscreen native video player</li>
+            <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> Subtitle file picker (.SRT / .VTT)</li>
+            <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> Persistent login &amp; offline screen</li>
+          </ul>
+          <div class="app-card-actions">
+            <a href="/download/Lumiere.apk" class="app-btn-download">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              Download APK (89 KB)
+            </a>
+            <span class="app-sub-action">Phones, Tablets &amp; Android TV</span>
+          </div>
+        </article>
+
+        <!-- Windows EXE -->
+        <article class="app-card">
+          <div class="app-card-head">
+            <div class="app-icon-wrap" aria-hidden="true">
+              <svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M0 3.449L9.75 2.1v9.451H0m10.949-9.602L24 0v11.4H10.949M0 12.6h9.75v9.451L0 20.699M10.949 12.6H24V24l-12.9-1.801"/>
+              </svg>
+            </div>
+            <div>
+              <h2 class="app-card-title">Windows</h2>
+              <span class="app-card-badge">64-bit EXE • Win 10 / 11</span>
+            </div>
+          </div>
+          <ul class="app-card-features">
+            <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> Native desktop installer with shortcuts</li>
+            <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> F11 immersive fullscreen cinema mode</li>
+            <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> Remembers window size and state</li>
+          </ul>
+          <div class="app-card-actions">
+            <a href="/download/Lumiere-Setup.exe" class="app-btn-download">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              Download Installer (79 MB)
+            </a>
+            <span class="app-sub-action">Desktop, Laptop &amp; Surface</span>
+          </div>
+        </article>
+
+        <!-- macOS DMG -->
+        <article class="app-card">
+          <div class="app-card-head">
+            <div class="app-icon-wrap" aria-hidden="true">
+              <svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 6.84c.62-.75 1.04-1.8 1.01-2.84-.89.04-1.98.6-2.61 1.34-.56.64-1.05 1.69-.92 2.71 1 .08 2.02-.53 2.52-1.21z"/>
+              </svg>
+            </div>
+            <div>
+              <h2 class="app-card-title">macOS</h2>
+              <span class="app-card-badge">Apple Disk Image • macOS 10.15+</span>
+            </div>
+          </div>
+          <ul class="app-card-features">
+            <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> Drag-and-drop DMG installation</li>
+            <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> Native Mac menu bar integration</li>
+            <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> Intel &amp; Apple Silicon compatible</li>
+          </ul>
+          <div class="app-card-actions">
+            <a href="/download/Lumiere.dmg" class="app-btn-download">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              Download DMG (240 MB)
+            </a>
+            <span class="app-sub-action">Also available: <a href="/download/Lumiere-mac.zip">Portable .zip (96 MB)</a></span>
+          </div>
+        </article>
+
+        <!-- iPhone / iPad (iOS Safari PWA) -->
+        <article class="app-card">
+          <div class="app-card-head">
+            <div class="app-icon-wrap" aria-hidden="true">
+              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="5" y="2" width="14" height="20" rx="3" ry="3"/>
+                <line x1="12" y1="18" x2="12.01" y2="18"/>
+              </svg>
+            </div>
+            <div>
+              <h2 class="app-card-title">iPhone &amp; iPad</h2>
+              <span class="app-card-badge">Web App • iOS 14+</span>
+            </div>
+          </div>
+          <p style="font-size:13px;color:var(--text-soft);margin:0;">Apple requires Web Apps on iOS to be installed through Safari:</p>
+          <div class="ios-steps">
+            <div class="ios-step">
+              <span class="step-num">1</span>
+              <span>Open <strong>movies.creativeclicks.art</strong> in <strong>Safari</strong></span>
+            </div>
+            <div class="ios-step">
+              <span class="step-num">2</span>
+              <span>Tap the <strong>Share</strong> button at bottom (<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="display:inline;vertical-align:baseline;"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>)</span>
+            </div>
+            <div class="ios-step">
+              <span class="step-num">3</span>
+              <span>Tap <strong>Add to Home Screen</strong></span>
+            </div>
+          </div>
+          <div class="app-card-actions">
+            <a href="/" class="app-btn-download" style="background:#2563eb;">
+              Open in Safari
+            </a>
+            <span class="app-sub-action">Runs full-screen with home icon</span>
+          </div>
+        </article>
+      </div>
+
+      <div class="login-footer-meta" style="justify-content:center;">
+        <span>Lumière v1.0.0</span>
+        <span>•</span>
+        <span>All streaming content stays private and secure</span>
+      </div>
+    </div>
+  </main>
+
+</body>
+
+</html>

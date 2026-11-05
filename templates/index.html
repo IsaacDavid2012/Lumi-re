@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Lumière">
+  <meta name="format-detection" content="telephone=no">
+  <meta name="csrf-token" content="{{ csrf_token() }}">
+  <meta name="theme-color" content="#08090c">
+  <title>{{ site_name }} — Stream Movies &amp; Series</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="icon" type="image/x-icon" href="/favicon.ico" sizes="any">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <link rel="manifest" href="/site.webmanifest">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://image.tmdb.org">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/css/style.css">
+</head>
+
+<body id="top">
+
+  <header class="site-header" id="siteHeader">
+    <div class="header-inner">
+      <a class="brand" id="brandHome" href="#top" aria-label="{{ site_name }} home">
+        <span class="brand-mark">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <polygon points="7 3.5 20.5 11.5 7 19.5 7 3.5"></polygon>
+            <rect x="5.5" y="20.5" width="13" height="2" rx="1"></rect>
+          </svg>
+        </span>
+        <span class="brand-name">{{ site_name_upper }}</span>
+      </a>
+
+      <nav class="primary-nav" aria-label="Primary">
+        <button type="button" class="nav-link active" data-view="home">Home</button>
+        <button type="button" class="nav-link" data-view="movies">Movies</button>
+        <button type="button" class="nav-link" data-view="tv">TV Shows</button>
+        <button type="button" class="nav-link" data-view="top">Top Rated</button>
+        <button type="button" class="nav-link" data-view="mylist">My List</button>
+      </nav>
+
+      <div class="header-actions">
+        <form class="search-form" id="searchForm" role="search" autocomplete="off">
+          <svg class="search-icon" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+          <input id="searchInput" type="search" placeholder="Search movies, series, actors…" aria-label="Search movies and series">
+          <button type="button" class="search-clear" id="searchClear" aria-label="Clear search" hidden>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
+        </form>
+
+        <div class="user-menu">
+          <button type="button" class="profile-switch-btn" id="profileSwitchBtn" title="Switch household profile" aria-label="Switch household profile">
+            <span class="avatar" id="headerProfileAvatar" style="background: {{ (active_profile.avatar_color if active_profile else '#e50914') }};" aria-hidden="true">{{ ((active_profile.name if active_profile else current_user) or 'admin')[0]|upper }}</span>
+            <span class="user-name" id="headerProfileName">{{ (active_profile.name if active_profile else current_user) or 'admin' }}</span>
+            <span class="kids-pill" id="headerKidsBadge" {% if not (active_profile and active_profile.is_kids) %}hidden{% endif %}>KIDS</span>
+            <svg class="profile-caret" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"></polyline></svg>
+          </button>
+          <a class="icon-btn" href="/apps" title="Install Apps (Android, Windows, Mac, iOS)" aria-label="Install Apps">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="7 10 12 15 17 10"></polyline>
+              <line x1="12" y1="15" x2="12" y2="3"></line>
+            </svg>
+          </a>
+          <a class="icon-btn" href="/account" title="Account settings" aria-label="Account settings">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <circle cx="12" cy="12" r="3"></circle>
+              <path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06A1.7 1.7 0 0 0 15 19.4a1.7 1.7 0 0 0-1 1.55V21a2 2 0 1 1-4 0v-.09A1.7 1.7 0 0 0 9 19.4a1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.7 1.7 0 0 0 4.6 15a1.7 1.7 0 0 0-1.55-1H3a2 2 0 1 1 0-4h.09A1.7 1.7 0 0 0 4.6 9a1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.7 1.7 0 0 0 9 4.6a1.7 1.7 0 0 0 1-1.55V3a2 2 0 1 1 4 0v.09A1.7 1.7 0 0 0 15 4.6a1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.7 1.7 0 0 0 19.4 9v.09a1.7 1.7 0 0 0 1.55 1H21a2 2 0 1 1 0 4h-.09a1.7 1.7 0 0 0-1.51 1z"></path>
+            </svg>
+          </a>
+          {% if is_admin %}
+          <a class="icon-btn admin-link" href="/admin" title="Manage accounts" aria-label="Manage accounts">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+              <circle cx="9" cy="7" r="4"></circle>
+              <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+              <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+            </svg>
+          </a>
+          {% endif %}
+          <form method="POST" action="/logout" class="logout-form">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" class="icon-btn" title="Sign out" aria-label="Sign out">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                <polyline points="16 17 21 12 16 7"></polyline>
+                <line x1="21" y1="12" x2="9" y2="12"></line>
+              </svg>
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="app-main">
+
+    <!-- HOME -->
+    <section class="view" id="homeView">
+      <section class="hero" id="hero" aria-label="Featured title">
+        <div class="hero-bg" id="heroBg" {% if initial_hero and (initial_hero.backdrop_url or initial_hero.poster_url) %}style="background-image: url('{{ initial_hero.backdrop_url or initial_hero.poster_url }}'); opacity: 1;"{% endif %}></div>
+        <div class="hero-shade"></div>
+        <div class="hero-inner">
+          <div class="hero-copy">
+            <div class="hero-eyebrow">
+              <span class="hero-label">{{ site_name_upper }}</span>
+              <span id="heroType">{{ 'SERIES' if (initial_hero and initial_hero.media_type == 'tv') else 'FILM' }}</span>
+            </div>
+            <h1 class="hero-title" id="heroTitle">{{ initial_hero.title if initial_hero else site_name }}</h1>
+            <div class="hero-meta" id="heroMeta"></div>
+            <p class="hero-overview" id="heroOverview">
+              {{ initial_hero.overview if (initial_hero and initial_hero.overview) else 'A clean, ad-free cinema experience in 4K & Full HD.' }}
+            </p>
+            <div class="hero-actions">
+              <button type="button" class="btn btn-play" id="heroPlay">
+                <svg width="19" height="19" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><polygon points="6 3 21 12 6 21 6 3"></polygon></svg>
+                Play
+              </button>
+              <button type="button" class="btn btn-ghost" id="heroWatchlist">
+                <span id="heroWatchlistIcon">+</span>
+                <span id="heroWatchlistLabel">My List</span>
+              </button>
+              <button type="button" class="btn btn-ghost" id="heroInfo">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+                More Info
+              </button>
+            </div>
+            <div class="hero-dots" id="heroDots" role="tablist" aria-label="Featured titles"></div>
+          </div>
+        </div>
+      </section>
+
+      <div class="rows" id="rowsContainer"></div>
+    </section>
+
+    <!-- BROWSE -->
+    <section class="view" id="browseView" hidden>
+      <div class="view-head">
+        <div>
+          <p class="view-eyebrow" id="browseEyebrow">Browse</p>
+          <h1 class="view-title" id="browseTitle">Popular Movies</h1>
+        </div>
+        <div class="filter-chips" id="browseFilters" role="tablist" aria-label="Categories"></div>
+      </div>
+      <div class="grid" id="browseGrid"></div>
+      <div class="load-more-wrap">
+        <button type="button" class="btn btn-ghost" id="browseMoreBtn" hidden>Load more</button>
+        <div class="grid-status" id="browseStatus"></div>
+      </div>
+    </section>
+
+    <!-- SEARCH -->
+    <section class="view" id="searchView" hidden>
+      <div class="view-head">
+        <div>
+          <p class="view-eyebrow">Search</p>
+          <h1 class="view-title" id="searchTitle">Results</h1>
+        </div>
+        <span class="view-count" id="searchCount"></span>
+      </div>
+      <div class="grid" id="searchGrid"></div>
+      <div class="load-more-wrap">
+        <button type="button" class="btn btn-ghost" id="searchMoreBtn" hidden>Load more</button>
+        <div class="grid-status" id="searchStatus"></div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- DETAILS -->
+  <dialog id="detailDialog" class="sheet detail-dialog" aria-labelledby="detailTitle">
+    <div class="detail-hero">
+      <div class="detail-hero-bg" id="detailHeroBg"></div>
+      <div class="detail-hero-shade"></div>
+      <button type="button" class="icon-btn detail-close" id="detailClose" aria-label="Close details">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+      </button>
+      <div class="detail-hero-copy">
+        <span class="detail-type" id="detailType">MOVIE</span>
+        <h2 class="detail-title" id="detailTitle">Title</h2>
+        <div class="detail-meta" id="detailMeta"></div>
+        <div class="detail-actions">
+          <button type="button" class="btn btn-play" id="detailPlay">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><polygon points="6 3 21 12 6 21 6 3"></polygon></svg>
+            Play
+          </button>
+          <button type="button" class="btn btn-ghost" id="detailWatchlist">
+            <span id="detailWatchlistIcon">+</span>
+            <span id="detailWatchlistLabel">My List</span>
+          </button>
+          <button type="button" class="btn btn-ghost" id="detailTrailerBtn" hidden>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="3"></rect><polygon points="10 9 16 12 10 15 10 9" fill="currentColor"></polygon></svg>
+            <span id="detailTrailerLabel">Watch Trailer</span>
+          </button>
+          <a class="btn btn-ghost" id="detailTrailer" href="#" target="_blank" rel="noopener noreferrer" hidden style="display:none">Trailer</a>
+          <a class="btn btn-ghost" id="detailTmdb" href="#" target="_blank" rel="noopener noreferrer" hidden style="display:none">Info</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="detail-body">
+      <div class="detail-main">
+        <div class="detail-trailer-wrap" id="detailTrailerWrap" hidden>
+          <iframe id="detailTrailerFrame" src="about:blank" title="Official Trailer" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe>
+        </div>
+
+        <p class="detail-overview" id="detailOverview">Loading overview…</p>
+
+        <div class="episode-panel" id="episodePanel" hidden>
+          <div class="episode-controls">
+            <label class="select-field">
+              <span>Season</span>
+              <select id="seasonSelect"></select>
+            </label>
+            <label class="select-field">
+              <span>Episode</span>
+              <select id="episodeSelect"></select>
+            </label>
+          </div>
+          <p class="episode-caption" id="episodeCaption"></p>
+          <div class="episode-grid" id="episodeGrid"></div>
+        </div>
+
+        <div class="detail-section">
+          <h3>Genres</h3>
+          <div class="chips" id="detailGenres"></div>
+        </div>
+
+        <div class="detail-section" id="detailCastSection">
+          <h3>Cast</h3>
+          <div class="cast-list" id="detailCast"></div>
+        </div>
+
+        <div class="detail-section" id="detailRecSection" hidden>
+          <h3>More Like This</h3>
+          <div class="mini-grid" id="detailRecommendations"></div>
+        </div>
+      </div>
+
+      <aside class="detail-side">
+        <img class="detail-poster" id="detailPoster" alt="" hidden>
+        <dl class="detail-facts" id="detailFacts"></dl>
+      </aside>
+    </div>
+  </dialog>
+
+  <!-- PLAYER -->
+  <dialog id="playerDialog" class="sheet player-dialog" aria-labelledby="playerTitle">
+    <div class="player-bar">
+      <div class="player-heading">
+        <span class="player-brand-pill" aria-hidden="true">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><polygon points="7 3.5 20.5 11.5 7 19.5 7 3.5"></polygon></svg>
+          {{ site_name_upper }}
+        </span>
+        <div>
+          <h2 class="player-title" id="playerTitle">Now Playing</h2>
+          <p class="player-sub" id="playerSub"></p>
+        </div>
+      </div>
+
+      <div class="player-actions">
+        <label class="select-field compact server-select-field" title="Switch stream source">
+          <span>Source</span>
+          <select id="playerServer" aria-label="Stream source">
+            <option value="native" id="nativeStreamOption" hidden>{{ site_name }} Direct (Native 1080p)</option>
+            <option value="s1">{{ site_name }} Stream 1 (Primary)</option>
+            <option value="s2">{{ site_name }} Stream 2 (Backup)</option>
+            <option value="s3">{{ site_name }} Stream 3 (Mirror)</option>
+            <option value="s4">{{ site_name }} Stream 4 (Global)</option>
+          </select>
+        </label>
+
+        <div class="player-episode-controls" id="playerEpisodeControls" hidden>
+          <button type="button" class="icon-btn" id="prevEpisodeBtn" title="Previous episode" aria-label="Previous episode">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="15 18 9 12 15 6"></polyline></svg>
+          </button>
+          <label class="select-field compact">
+            <span>S</span>
+            <select id="playerSeason"></select>
+          </label>
+          <label class="select-field compact">
+            <span>E</span>
+            <select id="playerEpisode"></select>
+          </label>
+          <button type="button" class="icon-btn" id="nextEpisodeBtn" title="Next episode" aria-label="Next episode">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 18 15 12 9 6"></polyline></svg>
+          </button>
+        </div>
+
+        <div class="subtitle-menu-wrap">
+          <button type="button" class="btn-cc" id="subtitleMenuBtn" title="Subtitles &amp; Captions (CC)" aria-label="Subtitles and Captions" aria-expanded="false">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="3"></rect><path d="M10 10.5a2.2 2.2 0 1 0 0 3"></path><path d="M16.5 10.5a2.2 2.2 0 1 0 0 3"></path></svg>
+            <span>CC</span>
+            <span class="cc-badge" id="subtitleCountBadge" hidden>0</span>
+          </button>
+
+          <div class="subtitle-popover" id="subtitlePopover" hidden>
+            <div class="subtitle-popover-head">
+              <strong>{{ site_name }} Subtitles Studio</strong>
+              <button type="button" class="subtitle-upload-btn" id="subtitleUploadBtn" title="Load your own .SRT or .VTT subtitle file">
+                + Load .SRT / .VTT
+              </button>
+              <input type="file" id="subtitleFileInput" accept=".srt,.vtt,text/vtt,application/x-subrip" hidden>
+            </div>
+
+            <div class="subtitle-tracks-list" id="subtitleTrackList" role="radiogroup" aria-label="Subtitle tracks">
+              <button type="button" class="subtitle-track-item active" data-track-id="off">Off</button>
+            </div>
+
+            <div class="subtitle-studio-controls">
+              <div class="studio-row">
+                <span class="studio-label">Sync Timing (<strong id="subtitleOffsetValue">0.0s</strong>)</span>
+                <div class="studio-btn-group">
+                  <button type="button" class="studio-chip" data-offset-delta="-0.5">-0.5s</button>
+                  <button type="button" class="studio-chip" data-offset-delta="-0.25">-0.25s</button>
+                  <button type="button" class="studio-chip" data-offset-reset="1">Reset</button>
+                  <button type="button" class="studio-chip" data-offset-delta="0.25">+0.25s</button>
+                  <button type="button" class="studio-chip" data-offset-delta="0.5">+0.5s</button>
+                </div>
+              </div>
+
+              <div class="studio-row">
+                <span class="studio-label">Clock (<strong id="subtitleClockDisplay">00:00</strong>)</span>
+                <div class="studio-btn-group">
+                  <button type="button" class="studio-chip" id="subtitleClockToggle">Pause Clock</button>
+                  <button type="button" class="studio-chip" id="subtitleClockBack">-10s</button>
+                  <button type="button" class="studio-chip" id="subtitleClockFwd">+10s</button>
+                </div>
+              </div>
+
+              <div class="studio-row">
+                <span class="studio-label">Size</span>
+                <div class="studio-btn-group" id="subtitleSizeGroup">
+                  <button type="button" class="studio-chip" data-sub-size="sm">S</button>
+                  <button type="button" class="studio-chip active" data-sub-size="md">M</button>
+                  <button type="button" class="studio-chip" data-sub-size="lg">L</button>
+                  <button type="button" class="studio-chip" data-sub-size="xl">XL</button>
+                </div>
+              </div>
+
+              <div class="studio-row">
+                <span class="studio-label">Color &amp; Box</span>
+                <div class="studio-btn-group" id="subtitleColorGroup">
+                  <button type="button" class="studio-chip active" data-sub-color="#ffffff">White</button>
+                  <button type="button" class="studio-chip" data-sub-color="#f5c518">Gold</button>
+                  <button type="button" class="studio-chip" data-sub-color="#38bdf8">Cyan</button>
+                  <button type="button" class="studio-chip" data-sub-bg="toggle" id="subtitleBgToggle">Box: Glass</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {% if is_admin %}
+        <button type="button" class="icon-btn" id="adminStreamBtn" title="Attach Direct Video URL (.mp4 / .m3u8) for Native Player" aria-label="Attach Direct Video Stream">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
+        </button>
+        {% endif %}
+
+        <button type="button" class="icon-btn" id="fullscreenBtn" title="Fullscreen" aria-label="Fullscreen">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 3H5a2 2 0 0 0-2 2v3"></path><path d="M21 8V5a2 2 0 0 0-2-2h-3"></path><path d="M3 16v3a2 2 0 0 0 2 2h3"></path><path d="M16 21h3a2 2 0 0 0 2-2v-3"></path></svg>
+        </button>
+        <button type="button" class="icon-btn" id="playerClose" title="Close player" aria-label="Close player">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
+      </div>
+    </div>
+
+    {% if is_admin %}
+    <form class="admin-stream-bar" id="adminStreamBar" hidden autocomplete="off">
+      <input type="url" id="adminStreamInput" placeholder="Paste direct .mp4 or .m3u8 URL to use Lumière Native Player for this title…">
+      <button type="submit" class="btn btn-play btn-sm">Use Native Player</button>
+      <button type="button" class="btn btn-ghost btn-sm" id="adminStreamClearBtn">Clear</button>
+    </form>
+    {% endif %}
+
+    <div class="player-frame" id="playerFrameWrap">
+      <!-- Subtle First-Party Lumière Cinema Watermark -->
+      <div class="lumiere-watermark" id="lumiereWatermark" aria-hidden="true">
+        <span class="watermark-dot"></span>
+        <span>{{ site_name_upper }} CINEMA</span>
+      </div>
+
+      <!-- Native First-Party Lumière Video Engine -->
+      <div class="lumiere-native-stage" id="lumiereNativeStage" hidden>
+        <video id="lumiereVideo" playsinline preload="metadata" crossorigin="anonymous"></video>
+        <button type="button" class="lumiere-center-play" id="lumiereCenterPlay" aria-label="Play or pause">
+          <svg width="30" height="30" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><polygon points="6 3 21 12 6 21 6 3"></polygon></svg>
+        </button>
+        <div class="lumiere-controls" id="lumiereControls">
+          <div class="lumiere-timeline-row">
+            <input type="range" class="lumiere-timeline" id="lumiereTimeline" min="0" max="1000" value="0" aria-label="Seek timeline">
+          </div>
+          <div class="lumiere-Deck">
+            <div class="lumiere-deck-left">
+              <button type="button" class="icon-btn" id="lumierePlayBtn" aria-label="Play or pause">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><polygon points="6 3 21 12 6 21 6 3"></polygon></svg>
+              </button>
+              <button type="button" class="icon-btn" id="lumiereRewBtn" title="Rewind 10s" aria-label="Rewind 10 seconds">-10s</button>
+              <button type="button" class="icon-btn" id="lumiereFwdBtn" title="Forward 10s" aria-label="Forward 10 seconds">+10s</button>
+              <button type="button" class="icon-btn" id="lumiereMuteBtn" aria-label="Mute or unmute">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>
+              </button>
+              <input type="range" class="lumiere-volume" id="lumiereVolumeSlider" min="0" max="1" step="0.05" value="1" aria-label="Volume">
+              <span class="lumiere-time-label" id="lumiereTimeLabel">00:00 / 00:00</span>
+            </div>
+            <div class="lumiere-deck-right">
+              <span class="lumiere-quality-badge" id="lumiereQualityBadge">1080p FULL HD</span>
+              <select id="lumiereSpeedSelect" class="lumiere-speed-select" aria-label="Playback speed" title="Playback speed">
+                <option value="0.75">0.75x</option>
+                <option value="1" selected>1.0x</option>
+                <option value="1.25">1.25x</option>
+                <option value="1.5">1.5x</option>
+                <option value="2">2.0x</option>
+              </select>
+              <button type="button" class="icon-btn" id="lumierePipBtn" title="Picture in Picture" aria-label="Picture in Picture">PiP</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Fallback White-Labeled Stream Frame -->
+      <iframe id="moviePlayer" src="about:blank" allowfullscreen allow="encrypted-media; picture-in-picture; autoplay"
+        referrerpolicy="strict-origin-when-cross-origin" title="{{ site_name }} Cinema Player"></iframe>
+
+      <!-- Universal Lumière Subtitle Overlay (Works on BOTH Native Video & Stream 1-4) -->
+      <div class="lumiere-subtitle-overlay" id="lumiereSubtitleOverlay" aria-live="off" hidden>
+        <span class="lumiere-subtitle-cue" id="lumiereSubtitleText"></span>
+      </div>
+
+      <!-- Concurrent Stream Limit Blocker (Max 3 Streams per Account) -->
+      <div class="stream-limit-overlay" id="streamLimitOverlay" hidden>
+        <div class="stream-limit-card">
+          <span class="player-brand-pill">SCREEN LIMIT REACHED (3 / 3)</span>
+          <h3>Too Many Screens Streaming Right Now</h3>
+          <p id="streamLimitMessage">Your account is limited to 3 simultaneous streams to prevent account sharing. Currently playing on:</p>
+          <ul class="stream-limit-list" id="streamLimitList"></ul>
+          <div class="stream-limit-actions">
+            <button type="button" class="btn btn-play" id="streamTakeoverBtn">Transfer Stream to This Screen</button>
+            <button type="button" class="btn btn-ghost" id="streamLimitCloseBtn">Close Player</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </dialog>
+
+  <!-- HOUSEHOLD PROFILES ("Who's Watching?" — Netflix Full-Screen Experience) -->
+  <dialog id="profileDialog" class="nf-profile-dialog" aria-labelledby="profileDialogTitle">
+    <div class="nf-profile-topbar">
+      <div class="nf-brand">
+        <span class="brand-mark" aria-hidden="true"></span>
+        <span class="brand-name">Lumière</span>
+      </div>
+      <button type="button" class="nf-close-btn" id="profileDialogClose" aria-label="Close profiles">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+      </button>
+    </div>
+
+    <div class="nf-profile-stage">
+      <!-- Screen 1: Who's watching? / Manage Profiles -->
+      <div class="nf-profile-picker" id="nfProfilePicker">
+        <h1 class="nf-profile-heading" id="profileDialogTitle">Who's watching?</h1>
+        <div class="nf-profile-list" id="profileCardsGrid" role="list"></div>
+        <div class="nf-profile-actions">
+          <button type="button" class="nf-manage-btn" id="nfManageProfilesBtn">Manage Profiles</button>
+        </div>
+      </div>
+
+      <!-- Screen 2: Add / Edit Profile (Netflix Style) -->
+      <form class="nf-profile-editor" id="profileCreateForm" autocomplete="off" hidden>
+        <input type="hidden" id="editProfileId" value="">
+        <h1 class="nf-editor-title" id="nfEditorTitle">Add Profile</h1>
+        <p class="nf-editor-sub" id="nfEditorSub">Add a profile for another person watching Lumière.</p>
+
+        <div class="nf-editor-divider"></div>
+
+        <div class="nf-editor-body">
+          <div class="nf-editor-avatar-col">
+            <div class="nf-avatar-tile nf-editor-avatar-preview" id="nfEditorAvatarPreview"></div>
+            <div class="nf-color-swatches" id="profileColorSwatches" role="radiogroup" aria-label="Avatar theme">
+              <button type="button" class="nf-swatch active" data-color="#e50914" style="background:#e50914" aria-label="Netflix Red"></button>
+              <button type="button" class="nf-swatch" data-color="#2563eb" style="background:#2563eb" aria-label="Classic Blue"></button>
+              <button type="button" class="nf-swatch" data-color="#f59e0b" style="background:#f59e0b" aria-label="Sunshine Gold"></button>
+              <button type="button" class="nf-swatch" data-color="#10b981" style="background:#10b981" aria-label="Emerald Green"></button>
+              <button type="button" class="nf-swatch" data-color="#8b5cf6" style="background:#8b5cf6" aria-label="Royal Purple"></button>
+              <button type="button" class="nf-swatch" data-color="#ec4899" style="background:#ec4899" aria-label="Neon Rose"></button>
+            </div>
+          </div>
+
+          <div class="nf-editor-fields">
+            <input type="text" class="nf-editor-input" id="newProfileName" maxlength="24" placeholder="Name" required>
+            <label class="nf-kids-check">
+              <input type="checkbox" id="newProfileKids">
+              <span class="nf-kids-box"></span>
+              <span class="nf-kids-copy">
+                <strong>Kid?</strong>
+                <small>Only show PG &amp; family-friendly series and movies</small>
+              </span>
+            </label>
+          </div>
+        </div>
+
+        <div class="nf-editor-divider"></div>
+
+        <div class="nf-editor-footer">
+          <button type="submit" class="nf-btn-primary" id="createProfileBtn">Continue</button>
+          <button type="button" class="nf-btn-outline" id="nfEditorCancelBtn">Cancel</button>
+          <button type="button" class="nf-btn-outline nf-btn-danger" id="nfEditorDeleteBtn" hidden>Delete Profile</button>
+        </div>
+      </form>
+    </div>
+  </dialog>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <footer class="site-footer">
+    <div class="footer-inner">
+      <div class="footer-brand">
+        <span class="brand-mark small">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <polygon points="7 3.5 20.5 11.5 7 19.5 7 3.5"></polygon>
+            <rect x="5.5" y="20.5" width="13" height="2" rx="1"></rect>
+          </svg>
+        </span>
+        <strong>{{ site_name_upper }}</strong>
+      </div>
+      <div class="footer-links">
+        <a href="/apps">Install Apps</a>
+        <a href="/terms">Terms of Service</a>
+        <a href="/terms#billing">Billing ({{ subscription_price }}/mo)</a>
+        <a href="/terms#rules">Site Rules</a>
+        <a href="/privacy">Privacy Policy</a>
+        <a href="/account">Account</a>
+      </div>
+      <p>{{ site_tagline }}</p>
+    </div>
+  </footer>
+
+  <script id="initialHomeData" type="application/json">{{ (initial_home or {}) | tojson }}</script>
+  <script src="/static/js/app.js"></script>
+</body>
+
+</html>

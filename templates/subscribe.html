@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Lumière">
+  <meta name="format-detection" content="telephone=no">
+  <meta name="csrf-token" content="{{ csrf_token() }}">
+  <meta name="theme-color" content="#08090c">
+  <title>Membership — {{ site_name }}</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="icon" type="image/x-icon" href="/favicon.ico" sizes="any">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <link rel="manifest" href="/site.webmanifest">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/css/style.css">
+</head>
+
+<body class="login-page">
+
+  <div class="login-backdrop" aria-hidden="true">
+    <div class="login-orb orb-1"></div>
+    <div class="login-orb orb-2"></div>
+    <div class="login-grid-overlay"></div>
+  </div>
+
+  <main class="login-container wide">
+    <div class="login-card account-card">
+      <div class="login-brand-header">
+        <a class="brand-lockup" href="/" aria-label="{{ site_name }}">
+          <span class="brand-mark">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <polygon points="7 3.5 20.5 11.5 7 19.5 7 3.5"></polygon>
+              <rect x="5.5" y="20.5" width="13" height="2" rx="1"></rect>
+            </svg>
+          </span>
+          <span class="brand-logo-text">{{ site_name_upper }}</span>
+        </a>
+        <div class="section-inline-actions">
+          <a class="small-link" href="/account">Account ({{ user.username }})</a>
+          <form method="POST" action="/logout" class="inline-form">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" class="link-btn">Sign out</button>
+          </form>
+        </div>
+      </div>
+
+      {% if error %}
+      <div class="login-alert" role="alert">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="12" y1="8" x2="12" y2="12"></line>
+          <line x1="12" y1="16" x2="12.01" y2="16"></line>
+        </svg>
+        <span>{{ error }}</span>
+      </div>
+      {% endif %}
+
+      {% if notice %}
+      <div class="login-notice" role="status">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M20 6L9 17l-5-5"></path>
+        </svg>
+        <span>{{ notice }}</span>
+      </div>
+      {% endif %}
+
+      <div class="plan-card">
+        <div class="plan-head">
+          <div>
+            <span class="eyebrow">ALL-ACCESS MEMBERSHIP</span>
+            <h1 class="login-title">{{ site_name }} Unlimited</h1>
+            <p class="login-subtitle" style="margin-bottom: 0;">Stream every movie and series in full HD with automatic watch progress.</p>
+          </div>
+          <div class="plan-price-box">
+            <span class="plan-price-amount">{{ price_display }}</span>
+            <span class="plan-price-period">/ month</span>
+          </div>
+        </div>
+
+        <ul class="plan-features">
+          <li>
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"></polyline></svg>
+            <span>Instant access to 1,266,000+ movies &amp; TV series</span>
+          </li>
+          <li>
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"></polyline></svg>
+            <span>Private Continue Watching queue &amp; episode progress sync</span>
+          </li>
+          <li>
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"></polyline></svg>
+            <span>Ad-free interface, instant search &amp; season selector</span>
+          </li>
+          <li>
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"></polyline></svg>
+            <span>Cancel anytime in 1 click from Account Settings</span>
+          </li>
+        </ul>
+
+        {% if is_subscribed %}
+        <div class="plan-actions">
+          <a href="/" class="btn-primary login-submit-btn" style="text-decoration: none;">
+            <span>Membership Active — Start Streaming</span>
+          </a>
+        </div>
+        {% else %}
+        <form method="POST" action="/subscribe/checkout" class="plan-actions">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button type="submit" class="btn-primary login-submit-btn">
+            <span>Subscribe with Stripe — {{ price_display }}/month</span>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <line x1="5" y1="12" x2="19" y2="12"></line>
+              <polyline points="12 5 19 12 12 19"></polyline>
+            </svg>
+          </button>
+          <p class="plan-legal-note">
+            By subscribing, you authorize recurring monthly charges of <strong>{{ price_display }}</strong> until canceled and agree to our <a href="/terms" target="_blank" rel="noopener" class="small-link">Terms of Service</a>, <a href="/terms#rules" target="_blank" rel="noopener" class="small-link">Site Rules</a>, and <a href="/privacy" target="_blank" rel="noopener" class="small-link">Privacy Policy</a>.
+          </p>
+        </form>
+
+        <div class="plan-subactions">
+          <form method="POST" action="/subscribe/sync" class="inline-form">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" class="link-btn">Already completed checkout? Refresh billing status</button>
+          </form>
+        </div>
+        {% endif %}
+      </div>
+
+      <div class="login-footer-meta">
+        <span>Secured by Stripe Checkout</span>
+        <span>•</span>
+        <a href="/terms" class="small-link">Terms &amp; Billing</a>
+        <span>•</span>
+        <a href="/terms#rules" class="small-link">Rules</a>
+        <span>•</span>
+        <a href="/privacy" class="small-link">Privacy</a>
+      </div>
+    </div>
+  </main>
+
+</body>
+
+</html>

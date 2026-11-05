@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Lumière">
+  <meta name="format-detection" content="telephone=no">
+  <meta name="csrf-token" content="{{ csrf_token() }}">
+  <meta name="theme-color" content="#08090c">
+  <title>Manage Accounts — {{ site_name }}</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="icon" type="image/x-icon" href="/favicon.ico" sizes="any">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <link rel="manifest" href="/site.webmanifest">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/css/style.css">
+</head>
+
+<body class="login-page">
+
+  <div class="login-backdrop" aria-hidden="true">
+    <div class="login-orb orb-1"></div>
+    <div class="login-orb orb-2"></div>
+    <div class="login-grid-overlay"></div>
+  </div>
+
+  <main class="login-container wide">
+    <div class="login-card account-card">
+      <div class="login-brand-header">
+        <a class="brand-lockup" href="/" aria-label="Back to {{ site_name }}">
+          <span class="brand-mark">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <polygon points="7 3.5 20.5 11.5 7 19.5 7 3.5"></polygon>
+              <rect x="5.5" y="20.5" width="13" height="2" rx="1"></rect>
+            </svg>
+          </span>
+          <span class="brand-logo-text">{{ site_name_upper }}</span>
+        </a>
+        <div class="section-inline-actions">
+          <a class="small-link" href="/account">Account settings</a>
+          <a class="small-link" href="/">Back to streaming</a>
+        </div>
+      </div>
+
+      {% if sudo_required %}
+      <h1 class="login-title">Confirm admin access</h1>
+      <p class="login-subtitle">For your security, please re-enter your admin password to unlock account management for 15 minutes.</p>
+
+      {% if error %}
+      <div class="login-alert" role="alert">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="12" y1="8" x2="12" y2="12"></line>
+          <line x1="12" y1="16" x2="12.01" y2="16"></line>
+        </svg>
+        <span>{{ error }}</span>
+      </div>
+      {% endif %}
+
+      <form method="POST" action="/admin/unlock" class="login-form" style="max-width:420px;">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="form-group">
+          <label class="form-label" for="sudo-password">Admin Password ({{ current_user }})</label>
+          <div class="input-wrapper">
+            <input id="sudo-password" name="password" type="password" required autofocus autocomplete="current-password" placeholder="Enter your admin password">
+          </div>
+        </div>
+        <button type="submit" class="btn-primary">Unlock Admin Console</button>
+      </form>
+      {% else %}
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;">
+        <div>
+          <h1 class="login-title">Manage accounts</h1>
+          <p class="login-subtitle">Create accounts for friends and family. Each account keeps its own private Continue Watching list.</p>
+        </div>
+        <form method="POST" action="/admin/lock">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button type="submit" class="btn-ghost-small" title="Lock admin console immediately">Lock Admin Console</button>
+        </form>
+      </div>
+
+      {% if error %}
+      <div class="login-alert" role="alert">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="12" y1="8" x2="12" y2="12"></line>
+          <line x1="12" y1="16" x2="12.01" y2="16"></line>
+        </svg>
+        <span>{{ error }}</span>
+      </div>
+      {% endif %}
+
+      {% if notice %}
+      <div class="login-notice" role="status">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M20 6L9 17l-5-5"></path>
+        </svg>
+        <span>{{ notice }}</span>
+      </div>
+      {% endif %}
+
+      <section class="account-section">
+        <div class="account-section-head">
+          <h2>Create an account</h2>
+        </div>
+        <form method="POST" action="/admin/create" class="admin-create-form">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <div class="form-group">
+            <label class="form-label" for="new-username">Username</label>
+            <div class="input-wrapper">
+              <input id="new-username" name="username" type="text" required minlength="3" maxlength="24" autocomplete="off" placeholder="e.g. alex">
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="new-password">Temporary password</label>
+            <div class="input-wrapper">
+              <input id="new-password" name="password" type="text" required minlength="10" autocomplete="off" placeholder="At least 10 characters">
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="comp-access">Billing</label>
+            <label class="checkbox-label" style="display:flex;align-items:center;gap:8px;height:42px;">
+              <input id="comp-access" name="comp_access" type="checkbox" value="1" checked>
+              <span>Free access (skip {{ subscription_price }}/mo)</span>
+            </label>
+          </div>
+          <button type="submit" class="btn-primary">Create account</button>
+        </form>
+      </section>
+
+      <section class="account-section">
+        <div class="account-section-head">
+          <h2>All accounts</h2>
+          <span class="view-count">{{ users|length }} total</span>
+        </div>
+        <div class="user-table-wrap">
+          <table class="user-table">
+            <thead>
+              <tr>
+                <th>User</th>
+                <th>Role</th>
+                <th>Billing</th>
+                <th>Saved items</th>
+                <th>Joined</th>
+                <th><span class="sr-only">Actions</span></th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for u in users %}
+              <tr>
+                <td>
+                  <span class="table-user">
+                    <span class="table-avatar">{{ u.username[0]|upper }}</span>
+                    {{ u.username }}{% if u.username == current_user %} <span class="you-tag">you</span>{% endif %}
+                  </span>
+                </td>
+                <td><span class="role-badge role-{{ u.role }}">{{ u.role }}</span></td>
+                <td>
+                  {% if u.role == 'admin' or u.subscription_status == 'comped' %}
+                  <span class="role-badge role-comped">Free / Comped</span>
+                  {% elif u.subscription_status in ('active', 'trialing') %}
+                  <span class="role-badge role-active">Paid ({{ subscription_price }}/mo)</span>
+                  {% else %}
+                  <span class="role-badge role-unpaid">Unpaid</span>
+                  {% endif %}
+                </td>
+                <td>{{ u.watch_count }}</td>
+                <td>{{ u.created_at|datefmt }}</td>
+                <td class="table-actions">
+                  {% if u.role != 'admin' %}
+                  <form method="POST" action="/admin/{{ u.username|urlencode }}/comp">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" class="btn-ghost-small" title="Toggle free access vs {{ subscription_price }}/mo billing">
+                      {{ 'Require billing' if u.subscription_status == 'comped' else 'Grant free' }}
+                    </button>
+                  </form>
+                  {% endif %}
+                  <form method="POST" action="/admin/{{ u.username|urlencode }}/revoke">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" class="btn-ghost-small" title="Sign out all active sessions for {{ u.username }}">Sign out</button>
+                  </form>
+                  {% if u.username != current_user %}
+                  <form method="POST" action="/admin/{{ u.username|urlencode }}/delete">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" class="btn-danger btn-danger-small">Delete</button>
+                  </form>
+                  {% endif %}
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      {% if audit_logs %}
+      <section class="account-section">
+        <div class="account-section-head">
+          <h2>Security audit log</h2>
+          <span class="view-count">Recent events</span>
+        </div>
+        <ul class="recent-list">
+          {% for log in audit_logs %}
+          <li>
+            <div class="recent-main">
+              <strong>{{ log.event|replace('_', ' ')|title }}</strong>
+              <span>{{ log.username }} · {{ log.ip }}</span>
+            </div>
+            <time>{{ log.created_at|datetimefmt }}</time>
+          </li>
+          {% endfor %}
+        </ul>
+      </section>
+      {% endif %}
+
+      <div class="login-footer-meta">
+        <span>Admins cannot delete their own account here</span>
+        <span>•</span>
+        <span>Use Account Settings</span>
+      </div>
+      {% endif %}
+    </div>
+  </main>
+
+</body>
+
+</html>

@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Lumière">
+  <meta name="format-detection" content="telephone=no">
+  <meta name="csrf-token" content="{{ csrf_token() }}">
+  <meta name="theme-color" content="#08090c">
+  <title>Account Settings — {{ site_name }}</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="icon" type="image/x-icon" href="/favicon.ico" sizes="any">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <link rel="manifest" href="/site.webmanifest">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/css/style.css">
+</head>
+
+<body class="login-page">
+
+  <div class="login-backdrop" aria-hidden="true">
+    <div class="login-orb orb-1"></div>
+    <div class="login-orb orb-2"></div>
+    <div class="login-grid-overlay"></div>
+  </div>
+
+  <main class="login-container wide">
+    <div class="login-card account-card">
+      <div class="login-brand-header">
+        <a class="brand-lockup" href="/" aria-label="Back to {{ site_name }}">
+          <span class="brand-mark">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <polygon points="7 3.5 20.5 11.5 7 19.5 7 3.5"></polygon>
+              <rect x="5.5" y="20.5" width="13" height="2" rx="1"></rect>
+            </svg>
+          </span>
+          <span class="brand-logo-text">{{ site_name_upper }}</span>
+        </a>
+        <div class="section-inline-actions">
+          <a class="small-link" href="/apps">Install apps</a>
+          <a class="small-link" href="/">Back to streaming</a>
+        </div>
+      </div>
+
+      <div class="account-hero">
+        <span class="account-avatar" aria-hidden="true">{{ (user.username or '?')[0]|upper }}</span>
+        <div>
+          <h1 class="login-title">{{ user.username }}</h1>
+          <div class="account-meta">
+            <span class="role-badge role-{{ user.role }}">{{ user.role }}</span>
+            <span>Member since {{ user.created_at|datefmt }}</span>
+          </div>
+        </div>
+      </div>
+
+      {% if error %}
+      <div class="login-alert" role="alert">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="12" y1="8" x2="12" y2="12"></line>
+          <line x1="12" y1="16" x2="12.01" y2="16"></line>
+        </svg>
+        <span>{{ error }}</span>
+      </div>
+      {% endif %}
+
+      {% if notice %}
+      <div class="login-notice" role="status">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M20 6L9 17l-5-5"></path>
+        </svg>
+        <span>{{ notice }}</span>
+      </div>
+      {% endif %}
+
+      <div class="account-stats">
+        <div class="account-stat">
+          <strong>{{ history_count }}</strong>
+          <span>Saved watch item{{ '' if history_count == 1 else 's' }}</span>
+        </div>
+        <div class="account-stat">
+          <strong>
+            {% if user.role == 'admin' or user.subscription_status == 'comped' %}
+              Complimentary
+            {% elif is_subscribed %}
+              Active ({{ subscription_price }}/mo)
+            {% else %}
+              Inactive
+            {% endif %}
+          </strong>
+          <span>
+            {% if user.subscription_end and user.subscription_end > 0 and user.subscription_status in ('active', 'trialing') %}
+              Renews / ends {{ user.subscription_end|datefmt }}
+            {% elif user.role == 'admin' or user.subscription_status == 'comped' %}
+              Full catalog access
+            {% else %}
+              Subscription required to stream
+            {% endif %}
+          </span>
+        </div>
+        <div class="account-stat">
+          <strong>scrypt + CSRF</strong>
+          <span>Session v{{ (user.auth_version or 0) + 1 }} active</span>
+        </div>
+      </div>
+
+      <section class="account-section">
+        <div class="account-section-head">
+          <h2>Membership &amp; billing</h2>
+          <div class="section-inline-actions">
+            {% if user.stripe_customer_id %}
+            <form method="POST" action="/account/billing-portal" class="inline-form">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button type="submit" class="link-btn">Stripe Billing Portal</button>
+            </form>
+            {% endif %}
+            {% if user.stripe_subscription_id and user.subscription_status in ('active', 'trialing') %}
+            <form method="POST" action="/account/subscription/cancel" class="inline-form">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button type="submit" class="link-btn">Cancel at period end</button>
+            </form>
+            {% endif %}
+            {% if not is_subscribed %}
+            <a class="small-link" href="/subscribe">Subscribe ({{ subscription_price }}/month)</a>
+            {% endif %}
+          </div>
+        </div>
+        {% if user.role == 'admin' or user.subscription_status == 'comped' %}
+        <p class="account-empty">Your account has complimentary full-access membership and is exempt from monthly billing.</p>
+        {% elif is_subscribed %}
+        <p class="account-empty">Your {{ subscription_price }}/month Stripe membership is active{% if user.subscription_end and user.subscription_end > 0 %} through {{ user.subscription_end|datefmt }}{% endif %}.</p>
+        {% else %}
+        <p class="account-empty">An active {{ subscription_price }}/month membership is required to stream movies and series. <a href="/subscribe" class="small-link">Activate with Stripe Checkout &rarr;</a></p>
+        {% endif %}
+      </section>
+
+      <section class="account-section">
+        <div class="account-section-head">
+          <h2>Recently watched</h2>
+          <div class="section-inline-actions">
+            {% if recent %}
+            <form method="POST" action="/account/history/clear" class="inline-form">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button type="submit" class="link-btn">Clear history</button>
+            </form>
+            {% endif %}
+            <a class="small-link" href="/">Continue watching</a>
+          </div>
+        </div>
+        {% if recent %}
+        <ul class="recent-list">
+          {% for item in recent %}
+          <li>
+            <div class="recent-main">
+              <strong>{{ item.title }}</strong>
+              <span>
+                {{ 'Series' if item.media_type == 'tv' else 'Movie' }}
+                {% if item.media_type == 'tv' %} · S{{ item.season }} E{{ item.episode }}{% endif %}
+                {% if item.year %} · {{ item.year }}{% endif %}
+              </span>
+            </div>
+            <time>{{ item.updated_at|datefmt }}</time>
+          </li>
+          {% endfor %}
+        </ul>
+        {% else %}
+        <p class="account-empty">Nothing saved yet. Start a movie or episode and it will appear in Continue Watching.</p>
+        {% endif %}
+      </section>
+
+      <section class="account-section">
+        <div class="account-section-head">
+          <h2>Security &amp; password</h2>
+          <form method="POST" action="/account/revoke-sessions" class="inline-form">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" class="link-btn">Sign out other devices</button>
+          </form>
+        </div>
+        <p class="account-empty">Updating your password automatically signs out any other browsers or devices logged into your account.</p>
+        <form method="POST" action="/account/password" class="password-change-form">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <div class="form-group">
+            <label class="form-label" for="current_password">Current password</label>
+            <div class="input-wrapper">
+              <input id="current_password" name="current_password" type="password" required autocomplete="current-password" placeholder="Current password">
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="new_password">New password</label>
+            <div class="input-wrapper">
+              <input id="new_password" name="new_password" type="password" required minlength="10" autocomplete="new-password" placeholder="At least 10 characters">
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="confirm_password">Confirm new password</label>
+            <div class="input-wrapper">
+              <input id="confirm_password" name="confirm_password" type="password" required minlength="10" autocomplete="new-password" placeholder="Repeat new password">
+            </div>
+          </div>
+          <button type="submit" class="btn-primary">Update password</button>
+        </form>
+      </section>
+
+      {% if security_events %}
+      <section class="account-section">
+        <div class="account-section-head">
+          <h2>Recent security activity</h2>
+        </div>
+        <ul class="recent-list">
+          {% for ev in security_events %}
+          <li>
+            <div class="recent-main">
+              <strong>{{ ev.event|replace('_', ' ')|title }}</strong>
+              <span>IP {{ ev.ip }}</span>
+            </div>
+            <time>{{ ev.created_at|datetimefmt }}</time>
+          </li>
+          {% endfor %}
+        </ul>
+      </section>
+      {% endif %}
+
+      {% if is_admin %}
+      <section class="account-section">
+        <div class="account-section-head">
+          <h2>Administration</h2>
+          <a class="small-link" href="/admin">Manage accounts</a>
+        </div>
+        <p class="account-empty">Create accounts for friends, revoke sessions, or remove accounts on this server.</p>
+      </section>
+      {% endif %}
+
+      <section class="account-section danger-zone">
+        <div class="account-section-head">
+          <h2>Delete account</h2>
+        </div>
+        <p class="account-empty">This permanently removes your account and your watch history. This cannot be undone.</p>
+        <form method="POST" action="/account/delete" class="delete-account-form">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <div class="input-wrapper">
+            <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+              <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+            </svg>
+            <input type="password" name="password" required autocomplete="current-password" placeholder="Enter your password to confirm">
+          </div>
+          <button type="submit" class="btn-danger">Delete my account</button>
+        </form>
+      </section>
+
+      <div class="login-footer-meta">
+        <a href="/terms" class="small-link">Terms of Service</a>
+        <span>•</span>
+        <a href="/terms#billing" class="small-link">Billing Policy</a>
+        <span>•</span>
+        <a href="/terms#rules" class="small-link">Site Rules</a>
+        <span>•</span>
+        <a href="/privacy" class="small-link">Privacy Policy</a>
+      </div>
+    </div>
+  </main>
+
+</body>
+
+</html>

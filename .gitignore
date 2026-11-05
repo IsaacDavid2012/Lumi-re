@@ -1,0 +1,45 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Environment & secrets
+.env
+.env.*
+!.env.example
+data/.flask_secret_key
+*.pem
+*.key
+*.keystore
+*.jks
+
+# SQLite Databases & runtime state
+movies.db
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+*.db.tmp
+*.sqlite
+*.sqlite3
+
+# Large raw data exports & logs
+data/*.json.gz
+data/downloads/
+*.log
+
+# Desktop & Mobile build outputs & dependencies
+apps/desktop/dist/
+apps/desktop/build/
+apps/desktop/node_modules/
+apps/android/.gradle/
+apps/android/build/
+apps/android/app/build/
+apps/android/.cxx/
+apps/android/local.properties
+.gradle/
+
+# OS generated
+.DS_Store
+Thumbs.db

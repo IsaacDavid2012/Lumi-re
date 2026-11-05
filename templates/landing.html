@@ -1,0 +1,1382 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Lumière">
+  <meta name="format-detection" content="telephone=no">
+  <meta name="theme-color" content="#08090c">
+  <title>{{ site_name }} — Cinema, Beautifully Streamed</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="icon" type="image/x-icon" href="/favicon.ico" sizes="any">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <link rel="manifest" href="/site.webmanifest">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@600;700;800;900&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/css/style.css">
+
+  <style>
+    /* Landing-specific Layout & Visual Polish */
+    .landing-body {
+      background: #08090c;
+      color: var(--text);
+      overflow-x: hidden;
+      min-height: 100vh;
+      position: relative;
+    }
+
+    /* Cinematic Ambient Glow Orbs */
+    .ambient-glow-wrap {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 900px;
+      overflow: hidden;
+      pointer-events: none;
+      z-index: 0;
+    }
+    .ambient-glow-orb-1 {
+      position: absolute;
+      top: -160px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 900px;
+      height: 560px;
+      background: radial-gradient(ellipse at center, rgba(229, 9, 20, 0.28) 0%, rgba(229, 9, 20, 0.08) 45%, transparent 70%);
+      filter: blur(60px);
+    }
+    .ambient-glow-orb-2 {
+      position: absolute;
+      top: 180px;
+      left: 10%;
+      width: 520px;
+      height: 480px;
+      background: radial-gradient(circle, rgba(0, 168, 225, 0.12) 0%, transparent 65%);
+      filter: blur(70px);
+    }
+    .ambient-glow-orb-3 {
+      position: absolute;
+      top: 240px;
+      right: 8%;
+      width: 480px;
+      height: 440px;
+      background: radial-gradient(circle, rgba(245, 197, 24, 0.08) 0%, transparent 65%);
+      filter: blur(80px);
+    }
+
+    /* Fixed Top Navbar */
+    .landing-header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 72px;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 max(24px, env(safe-area-inset-right)) 0 max(24px, env(safe-area-inset-left));
+      background: rgba(8, 9, 12, 0.78);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+      transition: background 0.2s ease, border-color 0.2s ease;
+    }
+
+    .landing-nav-links {
+      display: flex;
+      align-items: center;
+      gap: 28px;
+    }
+    .landing-nav-link {
+      color: var(--text-soft);
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 500;
+      transition: color 0.15s ease;
+    }
+    .landing-nav-link:hover {
+      color: #fff;
+    }
+
+    .landing-header-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .btn-apps-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 7px 14px;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: var(--radius-full);
+      color: var(--text);
+      font-size: 13px;
+      font-weight: 600;
+      text-decoration: none;
+      transition: all 0.18s ease;
+    }
+    .btn-apps-link:hover {
+      background: rgba(255, 255, 255, 0.12);
+      border-color: rgba(255, 255, 255, 0.24);
+      transform: translateY(-1px);
+    }
+
+    .btn-nav-login {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 8px 18px;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      border-radius: var(--radius-full);
+      color: #fff;
+      font-size: 13.5px;
+      font-weight: 600;
+      text-decoration: none;
+      transition: all 0.18s ease;
+    }
+    .btn-nav-login:hover {
+      background: rgba(255, 255, 255, 0.15);
+      border-color: rgba(255, 255, 255, 0.28);
+    }
+
+    .btn-nav-signup {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 8px 20px;
+      background: linear-gradient(135deg, #e50914, #ff2631);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: var(--radius-full);
+      color: #fff;
+      font-size: 13.5px;
+      font-weight: 700;
+      text-decoration: none;
+      box-shadow: 0 4px 16px rgba(229, 9, 20, 0.35);
+      transition: all 0.18s ease;
+    }
+    .btn-nav-signup:hover {
+      background: linear-gradient(135deg, #ff1723, #ff3b45);
+      box-shadow: 0 6px 22px rgba(229, 9, 20, 0.55);
+      transform: translateY(-1px);
+    }
+
+    /* Hero Section */
+    .landing-hero {
+      position: relative;
+      z-index: 1;
+      padding: 140px 24px 80px;
+      max-width: 1120px;
+      margin: 0 auto;
+      text-align: center;
+    }
+
+    .hero-badge-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 16px;
+      background: rgba(229, 9, 20, 0.12);
+      border: 1px solid rgba(229, 9, 20, 0.35);
+      border-radius: var(--radius-full);
+      color: #fca5a5;
+      font-size: 12.5px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 24px;
+      animation: floatSlow 4s ease-in-out infinite;
+    }
+    @keyframes floatSlow {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-4px); }
+    }
+
+    .hero-headline {
+      font-family: var(--font-display);
+      font-size: clamp(34px, 5.4vw, 68px);
+      font-weight: 900;
+      line-height: 1.08;
+      letter-spacing: -0.035em;
+      margin: 0 0 20px 0;
+      color: #fff;
+      text-wrap: balance;
+    }
+    .hero-headline-highlight {
+      background: linear-gradient(120deg, #fff 20%, #fca5a5 60%, #e50914 90%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .hero-subhead {
+      font-size: clamp(16px, 2.1vw, 20px);
+      line-height: 1.55;
+      color: var(--text-soft);
+      max-width: 780px;
+      margin: 0 auto 36px;
+      text-wrap: pretty;
+    }
+
+    /* Hero Quick-Start CTA Box */
+    .hero-cta-box {
+      background: rgba(18, 22, 32, 0.85);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: var(--radius-xl);
+      padding: 24px 28px;
+      max-width: 680px;
+      margin: 0 auto 32px;
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.65), 0 0 40px rgba(229, 9, 20, 0.12);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+    }
+    .hero-cta-prompt {
+      font-size: 14.5px;
+      font-weight: 600;
+      color: #fff;
+      margin-bottom: 16px;
+    }
+
+    .hero-cta-form {
+      display: flex;
+      flex-direction: row;
+      gap: 10px;
+      align-items: stretch;
+    }
+    .hero-input-wrap {
+      flex: 1;
+      position: relative;
+    }
+    .hero-input {
+      width: 100%;
+      height: 52px;
+      background: rgba(10, 12, 17, 0.95);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: var(--radius-md);
+      padding: 0 18px;
+      color: #fff;
+      font-size: 15px;
+      outline: none;
+      transition: border-color 0.18s ease, box-shadow 0.18s ease;
+    }
+    .hero-input:focus {
+      border-color: var(--brand);
+      box-shadow: 0 0 0 3px rgba(229, 9, 20, 0.28);
+    }
+    .hero-btn-submit {
+      height: 52px;
+      padding: 0 28px;
+      background: linear-gradient(135deg, #e50914, #ff2631);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: var(--radius-md);
+      color: #fff;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      white-space: nowrap;
+      box-shadow: 0 6px 20px rgba(229, 9, 20, 0.45);
+      transition: all 0.18s ease;
+    }
+    .hero-btn-submit:hover {
+      background: linear-gradient(135deg, #ff1723, #ff3b45);
+      box-shadow: 0 8px 28px rgba(229, 9, 20, 0.65);
+      transform: translateY(-1px);
+    }
+
+    .hero-cta-secondary {
+      margin-top: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      font-size: 13.5px;
+      color: var(--text-muted);
+    }
+    .hero-cta-secondary a {
+      color: #fff;
+      font-weight: 600;
+      text-decoration: underline;
+      text-underline-offset: 3px;
+    }
+    .hero-cta-secondary a:hover {
+      color: #fca5a5;
+    }
+
+    /* Trust Highlights Strip */
+    .hero-trust-strip {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: center;
+      gap: 24px;
+      margin-top: 20px;
+    }
+    .trust-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13.5px;
+      font-weight: 500;
+      color: var(--text-soft);
+    }
+    .trust-icon {
+      color: #10b981;
+      flex-shrink: 0;
+    }
+
+    /* Poster Marquee / Reel */
+    .marquee-section {
+      position: relative;
+      padding: 20px 0 60px;
+      overflow: hidden;
+      mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
+      -webkit-mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
+    }
+    .marquee-track {
+      display: flex;
+      gap: 16px;
+      width: max-content;
+      animation: marqueeScroll 45s linear infinite;
+    }
+    .marquee-track:hover {
+      animation-play-state: paused;
+    }
+    @keyframes marqueeScroll {
+      0% { transform: translateX(0); }
+      100% { transform: translateX(-50%); }
+    }
+    .poster-tile {
+      width: 170px;
+      height: 250px;
+      border-radius: var(--radius-md);
+      overflow: hidden;
+      position: relative;
+      background: #151922;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      flex-shrink: 0;
+      box-shadow: 0 10px 24px rgba(0, 0, 0, 0.5);
+      transition: transform 0.2s ease, border-color 0.2s ease;
+    }
+    .poster-tile:hover {
+      transform: translateY(-4px) scale(1.03);
+      border-color: rgba(229, 9, 20, 0.5);
+      box-shadow: 0 16px 36px rgba(0, 0, 0, 0.7);
+    }
+    .poster-img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .poster-overlay {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      padding: 24px 10px 10px;
+      background: linear-gradient(to top, rgba(0, 0, 0, 0.95) 0%, rgba(0, 0, 0, 0.6) 60%, transparent 100%);
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+    }
+    .poster-title {
+      font-size: 12.5px;
+      font-weight: 700;
+      color: #fff;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .poster-meta {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      color: #f5c518;
+      font-weight: 600;
+      margin-top: 2px;
+    }
+
+    /* Section Styles */
+    .landing-section {
+      position: relative;
+      z-index: 1;
+      padding: 90px 24px;
+      max-width: 1180px;
+      margin: 0 auto;
+    }
+    .section-head {
+      text-align: center;
+      max-width: 760px;
+      margin: 0 auto 52px;
+    }
+    .section-badge {
+      display: inline-block;
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--brand-bright);
+      margin-bottom: 12px;
+    }
+    .section-title {
+      font-family: var(--font-display);
+      font-size: clamp(28px, 4vw, 44px);
+      font-weight: 800;
+      line-height: 1.15;
+      letter-spacing: -0.025em;
+      margin: 0 0 16px;
+      color: #fff;
+    }
+    .section-desc {
+      font-size: 16px;
+      line-height: 1.6;
+      color: var(--text-soft);
+      margin: 0;
+    }
+
+    /* Features 6-Grid */
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 24px;
+    }
+    .feature-card {
+      background: rgba(18, 22, 32, 0.7);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: var(--radius-xl);
+      padding: 32px 28px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      transition: all 0.22s ease;
+      position: relative;
+      overflow: hidden;
+    }
+    .feature-card::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, rgba(229, 9, 20, 0.6), transparent);
+      opacity: 0;
+      transition: opacity 0.22s ease;
+    }
+    .feature-card:hover {
+      transform: translateY(-4px);
+      background: rgba(22, 27, 40, 0.85);
+      border-color: rgba(229, 9, 20, 0.4);
+      box-shadow: 0 20px 48px rgba(0, 0, 0, 0.6), 0 0 30px rgba(229, 9, 20, 0.12);
+    }
+    .feature-card:hover::before {
+      opacity: 1;
+    }
+    .feature-icon-box {
+      width: 54px;
+      height: 54px;
+      border-radius: var(--radius-md);
+      background: rgba(229, 9, 20, 0.12);
+      border: 1px solid rgba(229, 9, 20, 0.25);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--brand-bright);
+    }
+    .feature-title {
+      font-size: 19px;
+      font-weight: 700;
+      color: #fff;
+      margin: 0;
+    }
+    .feature-text {
+      font-size: 14.5px;
+      line-height: 1.6;
+      color: var(--text-soft);
+      margin: 0;
+    }
+
+    /* Devices Banner Card */
+    .devices-banner {
+      background: linear-gradient(135deg, rgba(24, 29, 44, 0.9) 0%, rgba(14, 17, 24, 0.95) 100%);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: var(--radius-xl);
+      padding: 48px 40px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 40px;
+      align-items: center;
+      box-shadow: 0 24px 64px rgba(0, 0, 0, 0.7);
+    }
+    .devices-info h3 {
+      font-family: var(--font-display);
+      font-size: clamp(24px, 3vw, 36px);
+      font-weight: 800;
+      margin: 0 0 16px;
+      color: #fff;
+    }
+    .devices-info p {
+      font-size: 15.5px;
+      line-height: 1.6;
+      color: var(--text-soft);
+      margin: 0 0 28px;
+    }
+    .device-list-pills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 28px;
+    }
+    .device-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 8px 14px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: var(--radius-sm);
+      font-size: 13px;
+      font-weight: 600;
+      color: #fff;
+    }
+    .device-pill svg {
+      color: var(--brand-bright);
+    }
+
+    /* Visual Device Grid */
+    .devices-visual-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+    .device-tile {
+      background: rgba(10, 12, 17, 0.8);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: var(--radius-lg);
+      padding: 24px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      text-decoration: none;
+      color: inherit;
+      transition: all 0.2s ease;
+    }
+    .device-tile:hover {
+      background: rgba(22, 27, 40, 0.9);
+      border-color: rgba(229, 9, 20, 0.4);
+      transform: translateY(-2px);
+    }
+    .device-tile-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: var(--radius-sm);
+      background: rgba(255, 255, 255, 0.06);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+    }
+    .device-tile-name {
+      font-size: 15px;
+      font-weight: 700;
+      color: #fff;
+      margin: 0;
+    }
+    .device-tile-ext {
+      font-size: 12px;
+      color: #fca5a5;
+      font-weight: 600;
+    }
+
+    /* Netflix Profile Experience Preview */
+    .profiles-banner {
+      background: radial-gradient(circle at 80% 50%, rgba(229, 9, 20, 0.15), transparent 60%), rgba(16, 20, 29, 0.85);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: var(--radius-xl);
+      padding: 44px 36px;
+      text-align: center;
+      margin-top: 60px;
+    }
+    .profiles-banner-title {
+      font-family: var(--font-display);
+      font-size: 26px;
+      font-weight: 800;
+      color: #fff;
+      margin: 0 0 12px;
+    }
+    .profiles-banner-desc {
+      font-size: 15px;
+      color: var(--text-soft);
+      max-width: 620px;
+      margin: 0 auto 32px;
+    }
+    .profiles-avatars-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+    .sample-avatar-card {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+    }
+    .sample-avatar-box {
+      width: 68px;
+      height: 68px;
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      font-weight: 800;
+      color: #fff;
+      box-shadow: 0 10px 24px rgba(0, 0, 0, 0.4);
+      border: 2px solid rgba(255, 255, 255, 0.15);
+      transition: transform 0.18s ease;
+    }
+    .sample-avatar-box:hover {
+      transform: scale(1.08);
+      border-color: #fff;
+    }
+    .sample-avatar-label {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-soft);
+    }
+
+    /* FAQ Accordion */
+    .faq-container {
+      max-width: 820px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+    .faq-item {
+      background: rgba(18, 22, 32, 0.7);
+      border: 1px solid rgba(255, 255, 255, 0.09);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      transition: border-color 0.18s ease, background 0.18s ease;
+    }
+    .faq-item:hover {
+      border-color: rgba(255, 255, 255, 0.2);
+      background: rgba(22, 27, 40, 0.85);
+    }
+    .faq-question {
+      width: 100%;
+      padding: 22px 24px;
+      background: none;
+      border: none;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      color: #fff;
+      font-size: 17px;
+      font-weight: 600;
+      text-align: left;
+      cursor: pointer;
+      font-family: inherit;
+    }
+    .faq-icon {
+      color: var(--brand-bright);
+      transition: transform 0.22s ease;
+      flex-shrink: 0;
+    }
+    .faq-item.open .faq-icon {
+      transform: rotate(45deg);
+    }
+    .faq-answer {
+      display: none;
+      padding: 0 24px 22px;
+      font-size: 15px;
+      line-height: 1.65;
+      color: var(--text-soft);
+    }
+    .faq-item.open .faq-answer {
+      display: block;
+    }
+
+    /* Final Bottom CTA */
+    .bottom-cta-wrap {
+      text-align: center;
+      padding: 80px 24px 100px;
+      max-width: 840px;
+      margin: 0 auto;
+    }
+    .bottom-cta-card {
+      background: linear-gradient(135deg, rgba(229, 9, 20, 0.18) 0%, rgba(18, 22, 32, 0.95) 60%);
+      border: 1px solid rgba(229, 9, 20, 0.4);
+      border-radius: var(--radius-xl);
+      padding: 56px 36px;
+      box-shadow: 0 24px 70px rgba(0, 0, 0, 0.75), 0 0 50px rgba(229, 9, 20, 0.15);
+    }
+    .bottom-cta-title {
+      font-family: var(--font-display);
+      font-size: clamp(28px, 4.2vw, 46px);
+      font-weight: 900;
+      margin: 0 0 16px;
+      color: #fff;
+    }
+    .bottom-cta-sub {
+      font-size: 16px;
+      color: var(--text-soft);
+      max-width: 600px;
+      margin: 0 auto 36px;
+    }
+    .bottom-btn-group {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+    .btn-bottom-primary {
+      padding: 16px 36px;
+      background: linear-gradient(135deg, #e50914, #ff2631);
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      border-radius: var(--radius-full);
+      color: #fff;
+      font-size: 16.5px;
+      font-weight: 700;
+      text-decoration: none;
+      box-shadow: 0 8px 30px rgba(229, 9, 20, 0.5);
+      transition: all 0.18s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .btn-bottom-primary:hover {
+      background: linear-gradient(135deg, #ff1723, #ff3b45);
+      transform: translateY(-2px);
+      box-shadow: 0 12px 38px rgba(229, 9, 20, 0.7);
+    }
+    .btn-bottom-secondary {
+      padding: 16px 32px;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      border-radius: var(--radius-full);
+      color: #fff;
+      font-size: 16px;
+      font-weight: 600;
+      text-decoration: none;
+      transition: all 0.18s ease;
+    }
+    .btn-bottom-secondary:hover {
+      background: rgba(255, 255, 255, 0.15);
+      border-color: rgba(255, 255, 255, 0.3);
+    }
+
+    /* Footer */
+    .landing-footer {
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+      padding: 48px 24px 60px;
+      background: #060709;
+      color: var(--text-muted);
+      font-size: 13.5px;
+    }
+    .landing-footer-inner {
+      max-width: 1120px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 28px;
+    }
+    .footer-top-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+    .footer-links-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px 36px;
+    }
+    .footer-links-grid a {
+      color: var(--text-soft);
+      text-decoration: none;
+      transition: color 0.15s ease;
+    }
+    .footer-links-grid a:hover {
+      color: #fff;
+    }
+    .footer-bottom-copy {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+      font-size: 12.5px;
+      border-top: 1px solid rgba(255, 255, 255, 0.05);
+      padding-top: 24px;
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 860px) {
+      .landing-nav-links {
+        display: none;
+      }
+      .devices-banner {
+        grid-template-columns: 1fr;
+        padding: 32px 24px;
+      }
+      .hero-cta-form {
+        flex-direction: column;
+      }
+      .hero-btn-submit {
+        width: 100%;
+        justify-content: center;
+      }
+      .landing-hero {
+        padding-top: 110px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .landing-header {
+        padding: 0 16px;
+      }
+      .btn-apps-link {
+        display: none;
+      }
+      .hero-cta-box {
+        padding: 20px 16px;
+      }
+      .bottom-cta-card {
+        padding: 36px 20px;
+      }
+      .bottom-btn-group {
+        flex-direction: column;
+        width: 100%;
+      }
+      .btn-bottom-primary, .btn-bottom-secondary {
+        width: 100%;
+        justify-content: center;
+      }
+    }
+  </style>
+</head>
+
+<body class="landing-body">
+
+  <!-- Ambient Light Effects -->
+  <div class="ambient-glow-wrap" aria-hidden="true">
+    <div class="ambient-glow-orb-1"></div>
+    <div class="ambient-glow-orb-2"></div>
+    <div class="ambient-glow-orb-3"></div>
+  </div>
+
+  <!-- Top Sticky Header -->
+  <header class="landing-header">
+    <a class="brand-lockup" href="/" aria-label="{{ site_name }} home">
+      <span class="brand-mark">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+          <polygon points="7 3.5 20.5 11.5 7 19.5 7 3.5"></polygon>
+          <rect x="5.5" y="20.5" width="13" height="2" rx="1"></rect>
+        </svg>
+      </span>
+      <span class="brand-logo-text">{{ site_name_upper }}</span>
+    </a>
+
+    <nav class="landing-nav-links" aria-label="Page navigation">
+      <a href="#features" class="landing-nav-link">Features</a>
+      <a href="#devices" class="landing-nav-link">Apps &amp; Devices</a>
+      <a href="#profiles" class="landing-nav-link">Profiles</a>
+      <a href="#faq" class="landing-nav-link">FAQ</a>
+    </nav>
+
+    <div class="landing-header-actions">
+      <a href="/apps" class="btn-apps-link" title="Download installable apps">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+          <polyline points="7 10 12 15 17 10"></polyline>
+          <line x1="12" y1="15" x2="12" y2="3"></line>
+        </svg>
+        <span>Apps</span>
+      </a>
+      <a href="/login" class="btn-nav-login" id="navSignInBtn">Sign In</a>
+      <a href="/signup" class="btn-nav-signup" id="navSignUpBtn">Get Started</a>
+    </div>
+  </header>
+
+  <!-- Hero Section -->
+  <section class="landing-hero">
+    <div class="hero-badge-pill">
+      <span>✨ Next-Generation Cinema • 1,260,000+ Titles</span>
+    </div>
+
+    <h1 class="hero-headline">
+      Unlimited movies, TV shows,<br>
+      <span class="hero-headline-highlight">and endless stories.</span>
+    </h1>
+
+    <p class="hero-subhead">
+      Stream anywhere in crystal-clear 4K HDR. Zero ads, zero popups, instant playback.
+      Watch on up to 3 screens at once, create custom profiles for your home,
+      and download native apps for phone, computer, and TV.
+    </p>
+
+    <!-- Quick-Start Form / Primary Action -->
+    <div class="hero-cta-box">
+      <div class="hero-cta-prompt">Ready to watch? Enter your username or email to create your account.</div>
+      <form action="/signup" method="GET" class="hero-cta-form">
+        <div class="hero-input-wrap">
+          <input
+            type="text"
+            name="username"
+            class="hero-input"
+            placeholder="Choose username or email"
+            autocomplete="username"
+            required
+            aria-label="Username or email"
+          >
+        </div>
+        <button type="submit" class="hero-btn-submit" id="heroGetStartedBtn">
+          <span>Get Started</span>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+            <polyline points="12 5 19 12 12 19"></polyline>
+          </svg>
+        </button>
+      </form>
+      <div class="hero-cta-secondary">
+        <span>Already have an account? <a href="/login">Sign in to your vault →</a></span>
+      </div>
+    </div>
+
+    <!-- Trust Highlights Strip -->
+    <div class="hero-trust-strip">
+      <div class="trust-item">
+        <svg class="trust-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <polyline points="20 6 9 17 4 12"></polyline>
+        </svg>
+        <span>Zero Commercial Ads or Popups</span>
+      </div>
+      <div class="trust-item">
+        <svg class="trust-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <polyline points="20 6 9 17 4 12"></polyline>
+        </svg>
+        <span>3 Simultaneous Streams</span>
+      </div>
+      <div class="trust-item">
+        <svg class="trust-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <polyline points="20 6 9 17 4 12"></polyline>
+        </svg>
+        <span>Native Apps (APK, EXE, DMG)</span>
+      </div>
+      <div class="trust-item">
+        <svg class="trust-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <polyline points="20 6 9 17 4 12"></polyline>
+        </svg>
+        <span>Cancel Anytime</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- Movie Posters Carousel / Marquee -->
+  <section class="marquee-section" aria-label="Featured titles carousel">
+    <div class="marquee-track">
+      {% if featured_posters %}
+        {% for movie in featured_posters %}
+        <div class="poster-tile">
+          <img
+            class="poster-img"
+            src="https://image.tmdb.org/t/p/w342{{ movie.poster_path }}"
+            alt="{{ movie.title }}"
+            loading="lazy"
+          >
+          <div class="poster-overlay">
+            <span class="poster-title">{{ movie.title }}</span>
+            <span class="poster-meta">★ {{ movie.vote_average|round(1) }}</span>
+          </div>
+        </div>
+        {% endfor %}
+        <!-- Duplicate loop for seamless continuous infinite scroll -->
+        {% for movie in featured_posters %}
+        <div class="poster-tile" aria-hidden="true">
+          <img
+            class="poster-img"
+            src="https://image.tmdb.org/t/p/w342{{ movie.poster_path }}"
+            alt="{{ movie.title }}"
+            loading="lazy"
+          >
+          <div class="poster-overlay">
+            <span class="poster-title">{{ movie.title }}</span>
+            <span class="poster-meta">★ {{ movie.vote_average|round(1) }}</span>
+          </div>
+        </div>
+        {% endfor %}
+      {% else %}
+        <!-- Curated fallback poster tiles -->
+        <div class="poster-tile"><img class="poster-img" src="https://image.tmdb.org/t/p/w342/bjiS5ipwxb9JFy3XRRN4OAilSeX.jpg" alt="Spider-Man" loading="lazy"></div>
+        <div class="poster-tile"><img class="poster-img" src="https://image.tmdb.org/t/p/w342/6VY1ZKgpsc8CfGsQcCGiYEgHdH0.jpg" alt="Cinema" loading="lazy"></div>
+        <div class="poster-tile"><img class="poster-img" src="https://image.tmdb.org/t/p/w342/5rhTDKUhPYvpdQIijFIs5VoWsON.jpg" alt="The Odyssey" loading="lazy"></div>
+        <div class="poster-tile"><img class="poster-img" src="https://image.tmdb.org/t/p/w342/fgSm5ylwiXbIHn8UbUXDjk9RRu4.jpg" alt="Fall 2" loading="lazy"></div>
+        <div class="poster-tile"><img class="poster-img" src="https://image.tmdb.org/t/p/w342/9l1NuFjel2j89hiuiJbsxfblqjy.jpg" alt="Clayface" loading="lazy"></div>
+      {% endif %}
+    </div>
+  </section>
+
+  <!-- Features Grid -->
+  <section class="landing-section" id="features">
+    <div class="section-head">
+      <span class="section-badge">Pure Cinema Engineering</span>
+      <h2 class="section-title">Built for Film Lovers. Zero Compromises.</h2>
+      <p class="section-desc">Experience a streaming platform designed without clutter. Every feature is tuned for speed, picture fidelity, and absolute privacy.</p>
+    </div>
+
+    <div class="features-grid">
+      <!-- 1. Ultra Fast Video -->
+      <div class="feature-card">
+        <div class="feature-icon-box">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+          </svg>
+        </div>
+        <h3 class="feature-title">Ultra-Fast 4K Streaming</h3>
+        <p class="feature-text">Adaptive multi-CDN video engines deliver instant playback and seamless seeking without endless loading wheels or buffering lag.</p>
+      </div>
+
+      <!-- 2. Zero Ads -->
+      <div class="feature-card">
+        <div class="feature-icon-box">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+          </svg>
+        </div>
+        <h3 class="feature-title">Zero Advertisements or Popups</h3>
+        <p class="feature-text">Enjoy pure, unadulterated cinema. No commercial breaks, no sponsored banners, and no intrusive popups interrupting your immersion.</p>
+      </div>
+
+      <!-- 3. Profiles -->
+      <div class="feature-card">
+        <div class="feature-icon-box">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+            <circle cx="9" cy="7" r="4"></circle>
+            <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+            <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+          </svg>
+        </div>
+        <h3 class="feature-title">Netflix-Style Profiles</h3>
+        <p class="feature-text">Up to 5 distinct profiles per household. Personalized Continue Watching queues, individual watchlists, kids filters, and 4-digit PIN security.</p>
+      </div>
+
+      <!-- 4. 3 Simultaneous Streams -->
+      <div class="feature-card">
+        <div class="feature-icon-box">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+            <line x1="8" y1="21" x2="16" y2="21"></line>
+            <line x1="12" y1="17" x2="12" y2="21"></line>
+          </svg>
+        </div>
+        <h3 class="feature-title">3 Simultaneous Streams</h3>
+        <p class="feature-text">Share your membership with family. Stream distinct movies on up to 3 screens at the exact same moment without kicking anyone off.</p>
+      </div>
+
+      <!-- 5. Subtitles in 40+ Languages -->
+      <div class="feature-card">
+        <div class="feature-icon-box">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="2" y1="12" x2="22" y2="12"></line>
+            <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+          </svg>
+        </div>
+        <h3 class="feature-title">Multi-Language Subtitles</h3>
+        <p class="feature-text">Instant real-time subtitle search in 40+ languages. Customize text sizing, background contrast, and adjust audio/subtitle sync offsets on the fly.</p>
+      </div>
+
+      <!-- 6. Native Apps -->
+      <div class="feature-card">
+        <div class="feature-icon-box">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect>
+            <line x1="12" y1="18" x2="12.01" y2="18"></line>
+          </svg>
+        </div>
+        <h3 class="feature-title">Native Desktop &amp; Mobile Apps</h3>
+        <p class="feature-text">True native packages for Android (APK), Windows (.exe setup), macOS (.dmg &amp; zip), plus iOS Safari Home Screen PWA support.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Devices & Apps Showcase -->
+  <section class="landing-section" id="devices">
+    <div class="devices-banner">
+      <div class="devices-info">
+        <span class="section-badge">Watch Everywhere</span>
+        <h3>Stream on all your favorite screens and devices.</h3>
+        <p>Whether you're relaxing on the sofa, commuting on the train, or traveling abroad, {{ site_name }} is ready to play in stunning quality.</p>
+
+        <div class="device-list-pills">
+          <span class="device-pill">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="7" width="20" height="15" rx="2" ry="2"></rect><polyline points="17 2 12 7 7 2"></polyline></svg>
+            Smart TVs &amp; AirPlay
+          </span>
+          <span class="device-pill">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
+            Windows &amp; Mac PCs
+          </span>
+          <span class="device-pill">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect><line x1="12" y1="18" x2="12.01" y2="18"></line></svg>
+            Android &amp; iPhones
+          </span>
+        </div>
+
+        <a href="/apps" class="btn-apps-link" style="padding: 12px 24px; font-size: 14.5px;">
+          <span>Explore All Downloadable Apps (.apk, .exe, .dmg) →</span>
+        </a>
+      </div>
+
+      <div class="devices-visual-grid">
+        <a href="/download/Lumiere.apk" class="device-tile" title="Download Android APK">
+          <div class="device-tile-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <path d="M17.523 15.3414c-.5511 0-.9993-.4486-.9993-.9997s.4482-.9993.9993-.9993c.551 0 .9993.4482.9993.9993.0001.5511-.4483.9997-.9993.9997m-11.046 0c-.5511 0-.9993-.4486-.9993-.9997s.4482-.9993.9993-.9993c.5511 0 .9993.4482.9993.9993 0 .5511-.4482.9997-.9993.9997m11.4045-6.02l1.996-3.4572c.1054-.1825.0428-.4171-.1397-.5225-.1822-.1055-.4169-.0429-.5224.1396l-2.0224 3.503c-1.637-.7488-3.4862-1.1687-5.4665-1.1687-1.9803 0-3.8295.4199-5.4665 1.1687l-2.0224-3.503c-.1055-.1825-.3402-.2451-.5224-.1396-.1825.1054-.2451.34-.1397.5225l1.996 3.4572c-3.6935 2.0135-6.197 5.867-6.3023 10.3541h22.909c-.1054-4.4871-2.6089-8.3406-6.3023-10.3541"></path>
+            </svg>
+          </div>
+          <div class="device-tile-name">Android Phone / Tablet</div>
+          <div class="device-tile-ext">Download APK (89 KB)</div>
+        </a>
+
+        <a href="/download/Lumiere-Setup.exe" class="device-tile" title="Download Windows Installer">
+          <div class="device-tile-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <path d="M0 3.449L9.75 2.1v9.451H0m10.949-9.602L24 0v11.401H10.949M0 12.6h9.75v9.451L0 20.699M10.949 12.6H24V24l-12.949-1.801"></path>
+            </svg>
+          </div>
+          <div class="device-tile-name">Windows PC</div>
+          <div class="device-tile-ext">Setup.exe (79 MB)</div>
+        </a>
+
+        <a href="/download/Lumiere.dmg" class="device-tile" title="Download macOS DMG">
+          <div class="device-tile-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 6.37c.61-.75 1.04-1.8 0.92-2.85-.9.04-2.01.6-2.65 1.34-.56.64-1.05 1.69-.92 2.71 1.01.08 2.04-.45 2.65-1.2"></path>
+            </svg>
+          </div>
+          <div class="device-tile-name">macOS (Intel &amp; Apple Silicon)</div>
+          <div class="device-tile-ext">Lumiere.dmg (240 MB)</div>
+        </a>
+
+        <a href="/apps#ios" class="device-tile" title="Install iOS PWA">
+          <div class="device-tile-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect>
+              <line x1="12" y1="18" x2="12.01" y2="18"></line>
+            </svg>
+          </div>
+          <div class="device-tile-name">iPhone &amp; iPad</div>
+          <div class="device-tile-ext">Add to Home Screen (PWA)</div>
+        </a>
+      </div>
+    </div>
+
+    <!-- Profiles Highlight Preview -->
+    <div class="profiles-banner" id="profiles">
+      <span class="section-badge">Household Sharing</span>
+      <h3 class="profiles-banner-title">Personalized profiles for everyone at home.</h3>
+      <p class="profiles-banner-desc">Create distinct profiles with custom avatars, dedicated watchlists, and separate watch histories. Protect your account with 4-digit PINs and activate Kids Mode for child-safe entertainment.</p>
+
+      <div class="profiles-avatars-row">
+        <div class="sample-avatar-card">
+          <div class="sample-avatar-box" style="background: #e50914;">A</div>
+          <span class="sample-avatar-label">Alex</span>
+        </div>
+        <div class="sample-avatar-card">
+          <div class="sample-avatar-box" style="background: #2563eb;">S</div>
+          <span class="sample-avatar-label">Sarah</span>
+        </div>
+        <div class="sample-avatar-card">
+          <div class="sample-avatar-box" style="background: #10b981;">K</div>
+          <span class="sample-avatar-label">Kids (Safe)</span>
+        </div>
+        <div class="sample-avatar-card">
+          <div class="sample-avatar-box" style="background: #8b5cf6;">M</div>
+          <span class="sample-avatar-label">Michael</span>
+        </div>
+        <div class="sample-avatar-card">
+          <div class="sample-avatar-box" style="background: rgba(255,255,255,0.08); border-style: dashed;">+</div>
+          <span class="sample-avatar-label">Add Profile</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FAQ Accordion -->
+  <section class="landing-section" id="faq">
+    <div class="section-head">
+      <span class="section-badge">Got Questions?</span>
+      <h2 class="section-title">Frequently Asked Questions</h2>
+      <p class="section-desc">Everything you need to know about getting started, devices, and streaming.</p>
+    </div>
+
+    <div class="faq-container">
+      <div class="faq-item">
+        <button type="button" class="faq-question">
+          <span>What is {{ site_name }}?</span>
+          <svg class="faq-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <line x1="12" y1="5" x2="12" y2="19"></line>
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+          </svg>
+        </button>
+        <div class="faq-answer">
+          {{ site_name }} is a cinematic streaming platform offering instant access to over 1,260,000+ movies and TV shows powered by high-speed adaptive streaming servers. You get an ad-free viewing experience with custom subtitle sync, personalized Netflix-style profiles, and native apps for Android, Windows, and Mac.
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <button type="button" class="faq-question">
+          <span>Where can I watch?</span>
+          <svg class="faq-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <line x1="12" y1="5" x2="12" y2="19"></line>
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+          </svg>
+        </button>
+        <div class="faq-answer">
+          Watch anywhere, anytime. Sign in with your {{ site_name }} account to watch instantly on the web from any personal computer, smartphone, tablet, or smart TV. You can also install our native desktop apps for Windows and Mac, or our mobile APK for Android and PWA for iOS.
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <button type="button" class="faq-question">
+          <span>How many devices can stream at the same time?</span>
+          <svg class="faq-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <line x1="12" y1="5" x2="12" y2="19"></line>
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+          </svg>
+        </button>
+        <div class="faq-answer">
+          Every account supports up to <strong>3 simultaneous playback streams</strong> across different devices and profiles. If a 4th stream is attempted, the system politely alerts you so account sharing remains fair and bandwidth remains fast.
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <button type="button" class="faq-question">
+          <span>Are there any commercial ads or popups?</span>
+          <svg class="faq-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <line x1="12" y1="5" x2="12" y2="19"></line>
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+          </svg>
+        </button>
+        <div class="faq-answer">
+          No. {{ site_name }} features zero third-party commercial interruptions, banner advertisements, or popup redirects. From the moment you press play, your focus stays entirely on the story.
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <button type="button" class="faq-question">
+          <span>How do I download the mobile and desktop apps?</span>
+          <svg class="faq-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <line x1="12" y1="5" x2="12" y2="19"></line>
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+          </svg>
+        </button>
+        <div class="faq-answer">
+          Visit our dedicated <a href="/apps" style="color: #fca5a5; font-weight: 600;">Apps Portal</a> to download the Android APK (`Lumiere.apk`), the Windows installer (`Lumiere-Setup.exe`), or the macOS disk image (`Lumiere.dmg`). For iPhones and iPads, tap Share in Safari and select "Add to Home Screen" for a full-screen app experience.
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <button type="button" class="faq-question">
+          <span>How do I sign up or sign in?</span>
+          <svg class="faq-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <line x1="12" y1="5" x2="12" y2="19"></line>
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+          </svg>
+        </button>
+        <div class="faq-answer">
+          Click the "Get Started" button to create an account in 30 seconds, or click "Sign In" if you already have login credentials. Once logged in, you'll be brought directly to your personalized movie catalog and profile picker.
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Bottom Final Conversion Banner -->
+  <section class="bottom-cta-wrap">
+    <div class="bottom-cta-card">
+      <h2 class="bottom-cta-title">Ready to start streaming?</h2>
+      <p class="bottom-cta-sub">Join thousands of film lovers on {{ site_name }}. Create your account in seconds or sign in to resume where you left off.</p>
+
+      <div class="bottom-btn-group">
+        <a href="/signup" class="btn-bottom-primary" id="bottomSignUpBtn">
+          <span>Create Account &amp; Start Watching</span>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+            <polyline points="12 5 19 12 12 19"></polyline>
+          </svg>
+        </a>
+        <a href="/login" class="btn-bottom-secondary" id="bottomSignInBtn">
+          <span>Sign In to Existing Vault</span>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="landing-footer">
+    <div class="landing-footer-inner">
+      <div class="footer-top-row">
+        <a class="brand-lockup" href="/" aria-label="{{ site_name }} home">
+          <span class="brand-mark">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <polygon points="7 3.5 20.5 11.5 7 19.5 7 3.5"></polygon>
+              <rect x="5.5" y="20.5" width="13" height="2" rx="1"></rect>
+            </svg>
+          </span>
+          <span class="brand-logo-text">{{ site_name_upper }}</span>
+        </a>
+
+        <div class="footer-links-grid">
+          <a href="/login">Sign In</a>
+          <a href="/signup">Sign Up</a>
+          <a href="/apps">Download Apps</a>
+          <a href="/terms">Terms of Service</a>
+          <a href="/terms#rules">Site Rules</a>
+          <a href="/terms#privacy">Privacy Policy</a>
+        </div>
+      </div>
+
+      <div class="footer-bottom-copy">
+        <span>&copy; {{ site_name }}. Cinema, beautifully streamed. All rights reserved.</span>
+        <span>Protected by hardened session cryptography, rate limiting &amp; CSRF protection.</span>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Simple FAQ Accordion Interaction Script -->
+  <script>
+    document.querySelectorAll('.faq-question').forEach(button => {
+      button.addEventListener('click', () => {
+        const item = button.closest('.faq-item');
+        const isOpen = item.classList.contains('open');
+        // Close others
+        document.querySelectorAll('.faq-item').forEach(other => {
+          if (other !== item) other.classList.remove('open');
+        });
+        item.classList.toggle('open', !isOpen);
+      });
+    });
+  </script>
+
+</body>
+</html>
