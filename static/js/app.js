@@ -2277,19 +2277,25 @@ async function updatePlayerSource(forceTakeover = false) {
   loadSubtitlesForCurrentTitle();
   startSubtitleClock();
 
-  const useNative = Boolean(state.player.directStream);
+  const useNative = Boolean(state.player.directStream) && state.player.server === "native";
 
   function fallbackToIframe() {
-    // Only used as absolute last resort if no direct stream is extracted
+    // Used as fallback: keeps empty frame shield and controls over iframe
     stopNativeVideo();
     if (lumiereNativeStage) lumiereNativeStage.hidden = true;
-    if (lumiereControls) lumiereControls.hidden = true;
-    if (lumiereCenterPlay) lumiereCenterPlay.hidden = true;
+    if (lumiereControls) lumiereControls.hidden = false;
+    if (lumiereCenterPlay) lumiereCenterPlay.hidden = false;
     if (iframeClickShield) {
-      iframeClickShield.hidden = true;
-      iframeClickShield.classList.add("disabled");
+      const isShieldOn = state.player?.shieldEnabled !== false;
+      iframeClickShield.hidden = false;
+      iframeClickShield.classList.toggle("disabled", !isShieldOn);
     }
-    if (playerFrameWrap) playerFrameWrap.classList.remove("controls-hidden");
+    if (shieldStatusText) {
+      shieldStatusText.textContent = state.player?.shieldEnabled !== false ? "Shield ON" : "Shield OFF";
+    }
+    if (shieldToggleBtn) {
+      shieldToggleBtn.classList.toggle("off", state.player?.shieldEnabled === false);
+    }
     player.hidden = false;
     state.player.server = "s1";
     if (playerServer) playerServer.value = "s1";
@@ -2303,7 +2309,17 @@ async function updatePlayerSource(forceTakeover = false) {
     const stream = state.player.directStream;
     player.src = "about:blank";
     player.hidden = true;
-    if (iframeClickShield) iframeClickShield.hidden = true;
+    if (iframeClickShield) {
+      const isShieldOn = state.player?.shieldEnabled !== false;
+      iframeClickShield.hidden = false;
+      iframeClickShield.classList.toggle("disabled", !isShieldOn);
+    }
+    if (shieldStatusText) {
+      shieldStatusText.textContent = state.player?.shieldEnabled !== false ? "Shield ON" : "Shield OFF";
+    }
+    if (shieldToggleBtn) {
+      shieldToggleBtn.classList.toggle("off", state.player?.shieldEnabled === false);
+    }
     lumiereNativeStage.hidden = false;
     if (lumiereControls) lumiereControls.hidden = false;
     if (lumiereCenterPlay) lumiereCenterPlay.hidden = false;

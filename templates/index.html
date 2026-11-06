@@ -274,12 +274,18 @@
       </div>
 
       <div class="player-actions">
-        <label class="select-field compact server-select-field" title="Switch stream source" hidden>
+        <label class="select-field compact server-select-field" title="Switch stream source">
           <span>Source</span>
           <select id="playerServer" aria-label="Stream source">
             <option value="native" id="nativeStreamOption" selected>{{ site_name }} Cinema Engine (Ad-Free Direct)</option>
+            <option value="s1">{{ site_name }} Backup Stream (Web Player)</option>
           </select>
         </label>
+
+        <button type="button" class="shield-badge-btn" id="shieldToggleBtn" title="Lumière AdShield intercepts clicks to block popup ads">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+          <span id="shieldStatusText">Shield ON</span>
+        </button>
 
         <div class="player-episode-controls" id="playerEpisodeControls" hidden>
           <button type="button" class="icon-btn" id="prevEpisodeBtn" title="Previous episode" aria-label="Previous episode">
@@ -404,8 +410,11 @@
         referrerpolicy="strict-origin-when-cross-origin"
         title="{{ site_name }} Cinema Player"></iframe>
 
-      <!-- Central Play/Pause Flash Overlay (Native Player) -->
-      <button type="button" class="lumiere-center-play" id="lumiereCenterPlay" aria-label="Play or pause" hidden>
+      <!-- Layer 2: Empty Frame Shield (Intercepts all clicks over the video area to block ads and popups) -->
+      <div class="iframe-click-shield" id="iframeClickShield" title="Click to Play/Pause (Double-click for Fullscreen)"></div>
+
+      <!-- Layer 3: Central Play/Pause Flash Overlay (Controls on top of empty frame) -->
+      <button type="button" class="lumiere-center-play" id="lumiereCenterPlay" aria-label="Play or pause">
         <svg width="34" height="34" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><polygon points="6 3 21 12 6 21 6 3"></polygon></svg>
       </button>
 

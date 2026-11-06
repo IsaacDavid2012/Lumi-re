@@ -3725,10 +3725,26 @@ body.login-page {
 }
 
 .lumiere-controls[hidden],
-.lumiere-center-play[hidden],
-.iframe-click-shield {
+.lumiere-center-play[hidden] {
   display: none !important;
   pointer-events: none !important;
+}
+
+/* Layer 2: Empty Frame Shield to block ads from reaching video */
+.iframe-click-shield {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  cursor: pointer;
+  background: transparent;
+  user-select: none;
+  -webkit-user-select: none;
+  pointer-events: auto;
+}
+
+.iframe-click-shield.disabled {
+  pointer-events: none !important;
+  display: none !important;
 }
 
 .shield-badge-btn {
