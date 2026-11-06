@@ -322,6 +322,16 @@ def init_tables():
     """)
     cur.execute("CREATE INDEX IF NOT EXISTS idx_active_streams_username ON active_streams(username)")
     cur.execute("""
+        CREATE TABLE IF NOT EXISTS dash_stream_sessions (
+            session_id TEXT PRIMARY KEY,
+            base_url TEXT NOT NULL,
+            manifest_url TEXT NOT NULL,
+            headers_json TEXT NOT NULL,
+            expires_at REAL NOT NULL
+        );
+    """)
+    cur.execute("CREATE INDEX IF NOT EXISTS idx_dash_stream_expires ON dash_stream_sessions(expires_at)")
+    cur.execute("""
         CREATE TABLE IF NOT EXISTS watch_history (
             username TEXT NOT NULL,
             profile_id INTEGER DEFAULT 0,
@@ -4676,9 +4686,6 @@ VIDLINK_KEY_HEX = "c75136c5668bbfe65a7ecad431a745db68b5f381555b38d8f6c699449cf11
 VIDLINK_KEY = bytes.fromhex(VIDLINK_KEY_HEX)
 VIDLINK_NONCE = bytes(24)
 
-_dash_stream_cache = {}  # session_id -> {base_url, manifest_url, headers, expires_at}
-_dash_stream_lock = threading.Lock()
-
 
 def _encrypt_vidlink_token(media_id: str) -> str:
     if not HAVE_NATIVE_EXTRACTOR:
@@ -4732,27 +4739,27 @@ def resolve_native_stream(media_type: str, tmdb_id: int, season: int = 1, episod
             session_id = secrets.token_urlsafe(18)
             base_url = playlist_url.rsplit("/", 1)[0] + "/"
             now = time.time()
-            with _dash_stream_lock:
-                # Prune expired sessions
-                for k in list(_dash_stream_cache.keys()):
-                    if _dash_stream_cache[k]["expires_at"] < now:
-                        del _dash_stream_cache[k]
-
-                _dash_stream_cache[session_id] = {
-                    "base_url": base_url,
-                    "manifest_url": playlist_url,
-                    "headers": {
-                        "User-Agent": headers["User-Agent"],
-                        "Referer": "https://vidlink.pro/",
-                        "Origin": "https://vidlink.pro",
-                        **playlist_headers,
-                    },
-                    "expires_at": now + 14400,  # 4 hour validity
-                }
+            stream_headers = {
+                "User-Agent": headers["User-Agent"],
+                "Referer": "https://vidlink.pro/",
+                "Origin": "https://vidlink.pro",
+                **playlist_headers,
+            }
+            conn = get_db()
+            conn.execute(
+                """
+                INSERT OR REPLACE INTO dash_stream_sessions (
+                    session_id, base_url, manifest_url, headers_json, expires_at
+                ) VALUES (?, ?, ?, ?, ?)
+                """,
+                (session_id, base_url, playlist_url, json.dumps(stream_headers), now + 14400),
+            )
+            conn.commit()
+            conn.close()
 
             return {
                 "type": "dash",
-                "url": f"/api/stream/dash/manifest?s={session_id}",
+                "url": f"/api/stream/dash/manifest/{session_id}",
                 "session_id": session_id,
                 "quality_label": "1080p FULL HD (Ad-Free)",
                 "captions": captions,
@@ -4763,26 +4770,33 @@ def resolve_native_stream(media_type: str, tmdb_id: int, season: int = 1, episod
         return None
 
 
-@app.route("/api/stream/dash/manifest")
-@login_required
-def api_stream_dash_manifest():
-    session_id = str(request.args.get("s") or "").strip()
-    if not session_id:
-        return jsonify({"error": "Missing stream session"}), 400
+@app.route("/api/stream/dash/manifest/<session_id>")
+def api_stream_dash_manifest(session_id):
+    session_id = str(session_id or "").strip()
+    if not re.fullmatch(r"[A-Za-z0-9_-]{12,64}", session_id):
+        return jsonify({"error": "Invalid session token"}), 400
 
-    with _dash_stream_lock:
-        sess = _dash_stream_cache.get(session_id)
+    conn = get_db()
+    row = conn.execute(
+        """
+        SELECT base_url, manifest_url, headers_json, expires_at
+        FROM dash_stream_sessions WHERE session_id = ?
+        """,
+        (session_id,),
+    ).fetchone()
+    conn.close()
 
-    if not sess or sess["expires_at"] < time.time():
+    if not row or float(row["expires_at"] or 0) < time.time():
         return jsonify({"error": "Stream session expired or invalid"}), 404
 
+    headers = json.loads(row["headers_json"] or "{}")
     try:
-        res = curl_requests.get(sess["manifest_url"], headers=sess["headers"], impersonate="chrome110", timeout=12)
+        res = curl_requests.get(row["manifest_url"], headers=headers, impersonate="chrome110", timeout=12)
         if res.status_code != 200:
             return jsonify({"error": "Upstream manifest error"}), 502
 
         mpd_text = res.text
-        base_tag = f"<BaseURL>/api/stream/dash/segment?s={session_id}&amp;path=</BaseURL>"
+        base_tag = f"<BaseURL>/api/stream/dash/segment/{session_id}/</BaseURL>"
         modified_mpd = re.sub(r"(<MPD\b[^>]*>)", r"\1\n  " + base_tag, mpd_text, count=1)
 
         response = Response(modified_mpd, mimetype="application/dash+xml")
@@ -4794,27 +4808,35 @@ def api_stream_dash_manifest():
         return jsonify({"error": "Manifest generation error"}), 500
 
 
-@app.route("/api/stream/dash/segment")
-@login_required
-def api_stream_dash_segment():
-    session_id = str(request.args.get("s") or "").strip()
-    path = str(request.args.get("path") or "").strip()
+@app.route("/api/stream/dash/segment/<session_id>/<path:filename>")
+def api_stream_dash_segment(session_id, filename):
+    session_id = str(session_id or "").strip()
+    filename = str(filename or "").strip()
 
-    if not session_id or not path:
-        return jsonify({"error": "Invalid segment request"}), 400
+    if not re.fullmatch(r"[A-Za-z0-9_-]{12,64}", session_id):
+        return jsonify({"error": "Invalid session token"}), 400
 
-    if not re.fullmatch(r"[A-Za-z0-9_\-\.%]+\.(?:m4s|mp4|webm)", path):
+    if not re.fullmatch(r"[A-Za-z0-9_\-\.%]+\.(?:m4s|mp4|webm)", filename):
         return jsonify({"error": "Invalid segment path"}), 400
 
-    with _dash_stream_lock:
-        sess = _dash_stream_cache.get(session_id)
+    conn = get_db()
+    row = conn.execute(
+        """
+        SELECT base_url, headers_json, expires_at
+        FROM dash_stream_sessions WHERE session_id = ?
+        """,
+        (session_id,),
+    ).fetchone()
+    conn.close()
 
-    if not sess or sess["expires_at"] < time.time():
+    if not row or float(row["expires_at"] or 0) < time.time():
         return jsonify({"error": "Stream session expired or invalid"}), 404
 
-    target_url = sess["base_url"] + path
+    headers = json.loads(row["headers_json"] or "{}")
+    target_url = row["base_url"] + filename
+
     try:
-        upstream = curl_requests.get(target_url, headers=sess["headers"], stream=True, impersonate="chrome110", timeout=15)
+        upstream = curl_requests.get(target_url, headers=headers, stream=True, impersonate="chrome110", timeout=15)
         def generate():
             for chunk in upstream.iter_content(chunk_size=65536):
                 if chunk:
@@ -4828,6 +4850,12 @@ def api_stream_dash_segment():
         cl = upstream.headers.get("Content-Length")
         if cl:
             resp.headers["Content-Length"] = cl
+        resp.headers["Access-Control-Allow-Origin"] = "*"
+        resp.headers["Cache-Control"] = "public, max-age=86400"
+        return resp
+    except Exception as e:
+        logging.warning("Segment proxy error: %s", e)
+        return jsonify({"error": "Segment transfer error"}), 502
         resp.headers["Access-Control-Allow-Origin"] = "*"
         resp.headers["Cache-Control"] = "public, max-age=86400"
         return resp
