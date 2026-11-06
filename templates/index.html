@@ -413,10 +413,48 @@
       <!-- Layer 2: Empty Frame Shield (Intercepts all clicks over the video area to block ads and popups) -->
       <div class="iframe-click-shield" id="iframeClickShield" title="Click to Play/Pause (Double-click for Fullscreen)"></div>
 
-      <!-- Layer 3: Central Play/Pause Flash Overlay (Controls on top of empty frame) -->
-      <button type="button" class="lumiere-center-play" id="lumiereCenterPlay" aria-label="Play or pause">
-        <svg width="34" height="34" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><polygon points="6 3 21 12 6 21 6 3"></polygon></svg>
-      </button>
+      <!-- Skip Ripple Feedback Overlays (Left: -10s, Right: +10s) -->
+      <div class="lumiere-skip-ripple lumiere-skip-ripple-left" id="lumiereSkipRippleLeft" hidden aria-hidden="true">
+        <div class="skip-ripple-content">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
+            <polyline points="3 3 3 8 8 8"/>
+            <text x="12" y="12.5" font-size="7.5" font-weight="700" fill="currentColor" stroke="none" text-anchor="middle" dominant-baseline="central" font-family="system-ui, sans-serif">10</text>
+          </svg>
+          <span class="skip-ripple-text">-10s</span>
+        </div>
+      </div>
+      <div class="lumiere-skip-ripple lumiere-skip-ripple-right" id="lumiereSkipRippleRight" hidden aria-hidden="true">
+        <div class="skip-ripple-content">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/>
+            <polyline points="21 3 21 8 16 8"/>
+            <text x="12" y="12.5" font-size="7.5" font-weight="700" fill="currentColor" stroke="none" text-anchor="middle" dominant-baseline="central" font-family="system-ui, sans-serif">10</text>
+          </svg>
+          <span class="skip-ripple-text">+10s</span>
+        </div>
+      </div>
+
+      <!-- Layer 3: Central Controls Dock (Play/Pause & 10s Skip) -->
+      <div class="lumiere-center-dock" id="lumiereCenterDock">
+        <button type="button" class="lumiere-center-btn lumiere-center-skip" id="lumiereCenterRew" aria-label="Rewind 10 seconds" title="Rewind 10 seconds (Left Arrow / J)">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
+            <polyline points="3 3 3 8 8 8"/>
+            <text x="12" y="12.5" font-size="7.5" font-weight="700" fill="currentColor" stroke="none" text-anchor="middle" dominant-baseline="central" font-family="system-ui, sans-serif">10</text>
+          </svg>
+        </button>
+        <button type="button" class="lumiere-center-btn lumiere-center-play" id="lumiereCenterPlay" aria-label="Play or pause" title="Play / Pause (Space)">
+          <svg width="34" height="34" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><polygon points="6 3 21 12 6 21 6 3"></polygon></svg>
+        </button>
+        <button type="button" class="lumiere-center-btn lumiere-center-skip" id="lumiereCenterFwd" aria-label="Forward 10 seconds" title="Forward 10 seconds (Right Arrow / L)">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/>
+            <polyline points="21 3 21 8 16 8"/>
+            <text x="12" y="12.5" font-size="7.5" font-weight="700" fill="currentColor" stroke="none" text-anchor="middle" dominant-baseline="central" font-family="system-ui, sans-serif">10</text>
+          </svg>
+        </button>
+      </div>
 
       <!-- Universal Lumière Subtitle Overlay (Works on BOTH Native Video & Stream 1-4) -->
       <div class="lumiere-subtitle-overlay" id="lumiereSubtitleOverlay" aria-live="off" hidden>
@@ -433,8 +471,20 @@
             <button type="button" class="icon-btn" id="lumierePlayBtn" aria-label="Play or pause" title="Play / Pause (Space)">
               <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><polygon points="6 3 21 12 6 21 6 3"></polygon></svg>
             </button>
-            <button type="button" class="icon-btn" id="lumiereRewBtn" title="Rewind 10s (Left Arrow)" aria-label="Rewind 10 seconds">-10s</button>
-            <button type="button" class="icon-btn" id="lumiereFwdBtn" title="Forward 10s (Right Arrow)" aria-label="Forward 10 seconds">+10s</button>
+            <button type="button" class="icon-btn lumiere-skip-btn" id="lumiereRewBtn" title="Rewind 10s (Left Arrow / J)" aria-label="Rewind 10 seconds">
+              <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
+                <polyline points="3 3 3 8 8 8"/>
+                <text x="12" y="12.5" font-size="7.5" font-weight="700" fill="currentColor" stroke="none" text-anchor="middle" dominant-baseline="central" font-family="system-ui, sans-serif">10</text>
+              </svg>
+            </button>
+            <button type="button" class="icon-btn lumiere-skip-btn" id="lumiereFwdBtn" title="Forward 10s (Right Arrow / L)" aria-label="Forward 10 seconds">
+              <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/>
+                <polyline points="21 3 21 8 16 8"/>
+                <text x="12" y="12.5" font-size="7.5" font-weight="700" fill="currentColor" stroke="none" text-anchor="middle" dominant-baseline="central" font-family="system-ui, sans-serif">10</text>
+              </svg>
+            </button>
             <button type="button" class="icon-btn" id="lumiereMuteBtn" aria-label="Mute or unmute" title="Mute / Unmute (M)">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>
             </button>

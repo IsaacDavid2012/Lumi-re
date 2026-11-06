@@ -108,7 +108,12 @@ const toastEl = $("toast");
 
 const lumiereNativeStage = $("lumiereNativeStage");
 const lumiereVideo = $("lumiereVideo");
+const lumiereCenterDock = $("lumiereCenterDock");
 const lumiereCenterPlay = $("lumiereCenterPlay");
+const lumiereCenterRew = $("lumiereCenterRew");
+const lumiereCenterFwd = $("lumiereCenterFwd");
+const lumiereSkipRippleLeft = $("lumiereSkipRippleLeft");
+const lumiereSkipRippleRight = $("lumiereSkipRippleRight");
 const lumiereTimeline = $("lumiereTimeline");
 const lumierePlayBtn = $("lumierePlayBtn");
 const lumiereRewBtn = $("lumiereRewBtn");
@@ -1700,6 +1705,38 @@ function bumpControlsVisibility() {
   }, 3500);
 }
 
+let skipRippleTimerLeft = null;
+let skipRippleTimerRight = null;
+function triggerSkipRipple(direction) {
+  if (direction === "left") {
+    if (!lumiereSkipRippleLeft) return;
+    clearTimeout(skipRippleTimerLeft);
+    lumiereSkipRippleLeft.hidden = false;
+    const content = lumiereSkipRippleLeft.querySelector(".skip-ripple-content");
+    if (content) {
+      content.style.animation = "none";
+      void content.offsetWidth;
+      content.style.animation = "";
+    }
+    skipRippleTimerLeft = setTimeout(() => {
+      lumiereSkipRippleLeft.hidden = true;
+    }, 550);
+  } else {
+    if (!lumiereSkipRippleRight) return;
+    clearTimeout(skipRippleTimerRight);
+    lumiereSkipRippleRight.hidden = false;
+    const content = lumiereSkipRippleRight.querySelector(".skip-ripple-content");
+    if (content) {
+      content.style.animation = "none";
+      void content.offsetWidth;
+      content.style.animation = "";
+    }
+    skipRippleTimerRight = setTimeout(() => {
+      lumiereSkipRippleRight.hidden = true;
+    }, 550);
+  }
+}
+
 function syncPlayButtonUI(isPlaying) {
   state.player.isPaused = !isPlaying;
   if (lumierePlayBtn) {
@@ -1709,6 +1746,13 @@ function syncPlayButtonUI(isPlaying) {
     lumierePlayBtn.setAttribute("title", isPlaying ? "Pause (Space)" : "Play (Space)");
   }
   if (lumiereCenterPlay) {
+    lumiereCenterPlay.innerHTML = isPlaying
+      ? '<svg width="34" height="34" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="4" width="4" height="16" rx="1.5"></rect><rect x="14" y="4" width="4" height="16" rx="1.5"></rect></svg>'
+      : '<svg width="34" height="34" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><polygon points="6 3 21 12 6 21 6 3"></polygon></svg>';
+  }
+  if (lumiereCenterDock) {
+    lumiereCenterDock.classList.toggle("visible", !isPlaying);
+  } else if (lumiereCenterPlay) {
     lumiereCenterPlay.classList.toggle("visible", !isPlaying);
   }
   if (!isPlaying) {
@@ -1752,10 +1796,14 @@ function sendPlayerCommand(command, val = null) {
       player.contentWindow.postMessage("pause", target);
     } else if (command === "seek") {
       const time = Math.max(0, Number(val) || 0);
-      player.contentWindow.postMessage({ command: "seek", time: time }, target);
-      player.contentWindow.postMessage({ type: "seek", time: time, data: time }, target);
-      player.contentWindow.postMessage({ event: "seek", time: time }, target);
-      player.contentWindow.postMessage({ action: "seek", time: time }, target);
+      player.contentWindow.postMessage({ command: "seek", time: time, value: time, data: time }, target);
+      player.contentWindow.postMessage({ type: "seek", time: time, value: time, data: time }, target);
+      player.contentWindow.postMessage({ type: "SEEK", time: time, value: time, data: time }, target);
+      player.contentWindow.postMessage({ event: "seek", time: time, value: time, data: time }, target);
+      player.contentWindow.postMessage({ action: "seek", time: time, value: time, data: time }, target);
+      player.contentWindow.postMessage({ method: "setCurrentTime", value: time }, target);
+      player.contentWindow.postMessage({ type: "PLAYER_COMMAND", command: "seek", time: time, value: time }, target);
+      player.contentWindow.postMessage({ type: "PLAYER_EVENT", event: "seek", data: { currentTime: time } }, target);
     } else if (command === "volume") {
       const vol = Math.max(0, Math.min(1, Number(val) || 0));
       player.contentWindow.postMessage({ command: "volume", level: vol, volume: vol }, target);
@@ -1809,6 +1857,7 @@ function seekRelative(deltaSeconds) {
   }
 
   updateTimelineUI(target, duration);
+  triggerSkipRipple(deltaSeconds < 0 ? "left" : "right");
   bumpControlsVisibility();
 }
 
@@ -2284,6 +2333,7 @@ async function updatePlayerSource(forceTakeover = false) {
     stopNativeVideo();
     if (lumiereNativeStage) lumiereNativeStage.hidden = true;
     if (lumiereControls) lumiereControls.hidden = false;
+    if (lumiereCenterDock) lumiereCenterDock.hidden = false;
     if (lumiereCenterPlay) lumiereCenterPlay.hidden = false;
     if (iframeClickShield) {
       const isShieldOn = state.player?.shieldEnabled !== false;
@@ -2322,6 +2372,7 @@ async function updatePlayerSource(forceTakeover = false) {
     }
     lumiereNativeStage.hidden = false;
     if (lumiereControls) lumiereControls.hidden = false;
+    if (lumiereCenterDock) lumiereCenterDock.hidden = false;
     if (lumiereCenterPlay) lumiereCenterPlay.hidden = false;
     if (lumiereQualityBadge) {
       lumiereQualityBadge.textContent = (state.player.directStream.quality_label || "1080p FULL HD").toUpperCase();
@@ -3065,6 +3116,20 @@ if (lumiereCenterPlay) {
   });
 }
 
+if (lumiereCenterRew) {
+  lumiereCenterRew.addEventListener("click", (e) => {
+    e.stopPropagation();
+    seekRelative(-10);
+  });
+}
+
+if (lumiereCenterFwd) {
+  lumiereCenterFwd.addEventListener("click", (e) => {
+    e.stopPropagation();
+    seekRelative(10);
+  });
+}
+
 if (lumierePlayBtn) {
   lumierePlayBtn.addEventListener("click", (e) => {
     e.stopPropagation();
@@ -3141,7 +3206,20 @@ if (iframeClickShield) {
     if (shieldClickTimer) {
       clearTimeout(shieldClickTimer);
       shieldClickTimer = null;
-      togglePlayerFullscreen();
+      // Double click: check position across the player width
+      const rect = iframeClickShield.getBoundingClientRect();
+      const clickX = e.clientX - rect.left;
+      const ratio = rect.width > 0 ? clickX / rect.width : 0.5;
+      if (ratio < 0.35) {
+        // Double click left 35%: Rewind 10s
+        seekRelative(-10);
+      } else if (ratio > 0.65) {
+        // Double click right 35%: Forward 10s
+        seekRelative(10);
+      } else {
+        // Double click center 30%: Toggle fullscreen
+        togglePlayerFullscreen();
+      }
     } else {
       shieldClickTimer = setTimeout(() => {
         shieldClickTimer = null;
