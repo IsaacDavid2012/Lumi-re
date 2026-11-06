@@ -2502,12 +2502,14 @@ async function openPlayer(item, season = 1, episode = 1, startAt = 0) {
     startAt: Number(startAt) || 0,
     currentTime: Number(startAt) || 0,
     duration: 0,
-    isPaused: false,
+    isPaused: true,
     shieldEnabled: state.player?.shieldEnabled !== false,
     requestId: (state.player?.requestId || 0) + 1,
   };
 
   playerTitle.textContent = displayTitle(title);
+  syncPlayButtonUI(false);
+  bumpControlsVisibility();
 
   if (title.media_type === "tv") {
     playerEpisodeControls.hidden = false;

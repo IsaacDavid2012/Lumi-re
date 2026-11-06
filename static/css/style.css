@@ -3792,13 +3792,14 @@ body.login-page {
   align-items: center;
   justify-content: center;
   gap: 24px;
-  z-index: 15;
+  z-index: 25;
   opacity: 0;
   pointer-events: none;
   transition: opacity 0.22s ease, transform 0.22s ease;
 }
 
-.lumiere-center-dock.visible {
+.lumiere-center-dock.visible,
+.player-frame:not(.controls-hidden) .lumiere-center-dock {
   opacity: 1;
   pointer-events: auto;
 }
