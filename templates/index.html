@@ -285,11 +285,6 @@
           </select>
         </label>
 
-        <button type="button" class="shield-badge-btn" id="shieldToggleBtn" title="Lumière AdShield intercepts clicks to block popup ads">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
-          <span id="shieldStatusText">Shield ON</span>
-        </button>
-
         <div class="player-episode-controls" id="playerEpisodeControls" hidden>
           <button type="button" class="icon-btn" id="prevEpisodeBtn" title="Previous episode" aria-label="Previous episode">
             <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="15 18 9 12 15 6"></polyline></svg>
@@ -413,11 +408,8 @@
         referrerpolicy="strict-origin-when-cross-origin"
         title="{{ site_name }} Cinema Player"></iframe>
 
-      <!-- AdShield Click Interceptor (Intercepts all clicks over the player to prevent popup ads) -->
-      <div class="iframe-click-shield" id="iframeClickShield" title="Click to Play/Pause (Double-click for Fullscreen)"></div>
-
-      <!-- Central Play/Pause Flash Overlay -->
-      <button type="button" class="lumiere-center-play" id="lumiereCenterPlay" aria-label="Play or pause">
+      <!-- Central Play/Pause Flash Overlay (Native Player) -->
+      <button type="button" class="lumiere-center-play" id="lumiereCenterPlay" aria-label="Play or pause" hidden>
         <svg width="34" height="34" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><polygon points="6 3 21 12 6 21 6 3"></polygon></svg>
       </button>
 
@@ -426,8 +418,8 @@
         <span class="lumiere-subtitle-cue" id="lumiereSubtitleText"></span>
       </div>
 
-      <!-- Universal Lumière Control Deck (Controls both Native Engine & Stream 1-4) -->
-      <div class="lumiere-controls" id="lumiereControls">
+      <!-- Universal Lumière Control Deck (Active on Native Engine) -->
+      <div class="lumiere-controls" id="lumiereControls" hidden>
         <div class="lumiere-timeline-row">
           <input type="range" class="lumiere-timeline" id="lumiereTimeline" min="0" max="1000" value="0" aria-label="Seek timeline">
         </div>

@@ -2284,19 +2284,17 @@ async function updatePlayerSource(forceTakeover = false) {
   function fallbackToIframe() {
     stopNativeVideo();
     if (lumiereNativeStage) lumiereNativeStage.hidden = true;
-    player.hidden = false;
+    if (lumiereControls) lumiereControls.hidden = true;
+    if (lumiereCenterPlay) lumiereCenterPlay.hidden = true;
     if (iframeClickShield) {
-      iframeClickShield.hidden = false;
-      iframeClickShield.classList.toggle("disabled", !state.player.shieldEnabled);
+      iframeClickShield.hidden = true;
+      iframeClickShield.classList.add("disabled");
     }
+    if (playerFrameWrap) playerFrameWrap.classList.remove("controls-hidden");
+    player.hidden = false;
     state.player.server = "s1";
     if (playerServer) playerServer.value = "s1";
     player.src = playerUrl(item, state.player.season, state.player.episode, startAt);
-    if (lumiereQualityBadge) {
-      lumiereQualityBadge.textContent = "1080p FULL HD";
-    }
-    syncPlayButtonUI(true);
-    bumpControlsVisibility();
   }
 
   function canBrowserPlayHevc() {
@@ -2325,6 +2323,8 @@ async function updatePlayerSource(forceTakeover = false) {
     player.hidden = true;
     if (iframeClickShield) iframeClickShield.hidden = true;
     lumiereNativeStage.hidden = false;
+    if (lumiereControls) lumiereControls.hidden = false;
+    if (lumiereCenterPlay) lumiereCenterPlay.hidden = false;
     if (lumiereQualityBadge) {
       lumiereQualityBadge.textContent = (state.player.directStream.quality_label || "1080p FULL HD").toUpperCase();
     }
@@ -2471,6 +2471,7 @@ async function openPlayer(item, season = 1, episode = 1, startAt = 0) {
 
   if (!playerDialog.open) playerDialog.showModal();
 }
+window.openPlayer = openPlayer;
 
 // ---------------------------------------------------------------------------
 // Household Profiles ("Who's Watching?" — Authentic Netflix Experience)

@@ -3724,20 +3724,11 @@ body.login-page {
   background: #000;
 }
 
-/* AdShield Click Interceptor */
+.lumiere-controls[hidden],
+.lumiere-center-play[hidden],
 .iframe-click-shield {
-  position: absolute;
-  inset: 0;
-  z-index: 8;
-  cursor: pointer;
-  background: transparent;
-  user-select: none;
-  -webkit-user-select: none;
-}
-
-.iframe-click-shield.disabled {
-  pointer-events: none;
-  display: none;
+  display: none !important;
+  pointer-events: none !important;
 }
 
 .shield-badge-btn {
