@@ -2788,6 +2788,26 @@ def api_history():
     if duration_seconds and progress_seconds > duration_seconds:
         progress_seconds = duration_seconds
 
+    is_ended = bool(payload.get("is_ended"))
+    # When watching TV series, advance to next episode if current episode ended or completed (>=90%)
+    if media_type == "tv" and (is_ended or (duration_seconds > 0 and progress_seconds >= duration_seconds * 0.90)):
+        if payload.get("next_season") and payload.get("next_episode"):
+            season = max(1, int(payload.get("next_season")))
+            episode = max(1, int(payload.get("next_episode")))
+            episode_name = str(payload.get("next_episode_name") or f"Episode {episode}")[:200]
+            progress_seconds = 0
+            duration_seconds = 0
+        elif payload.get("is_series_end"):
+            # Whole series completed, drop off continue watching
+            progress_seconds = max(100.0, duration_seconds or 100.0)
+            duration_seconds = progress_seconds
+        elif not payload.get("next_episode"):
+            # Auto-advance to next episode in season
+            episode += 1
+            episode_name = f"Episode {episode}"
+            progress_seconds = 0
+            duration_seconds = 0
+
     poster_url = sanitize_media_url(payload.get("poster_url"))
     backdrop_url = sanitize_media_url(payload.get("backdrop_url"))
     year = re.sub(r"[^0-9-]", "", str(payload.get("year") or ""))[:12]

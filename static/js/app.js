@@ -307,11 +307,103 @@ function queueHistorySave() {
   historySaveTimer = setTimeout(() => saveHistory(false), 900);
 }
 
-async function saveHistory(shouldRefresh = true) {
+function getNextTvEpisode() {
+  const item = state.player.item;
+  if (!item || item.media_type !== "tv") return null;
+
+  const currentSeason = Number(state.player.season) || 1;
+  const currentEpNum = Number(state.player.episode) || 1;
+  const episodes = state.player.episodes || [];
+
+  // 1. Check if there is another episode in the current season
+  const nextInSeason = episodes.find(
+    (ep) => Number(ep.episode_number) === currentEpNum + 1
+  );
+  if (nextInSeason) {
+    return {
+      season: currentSeason,
+      episode: Number(nextInSeason.episode_number),
+      episode_name: nextInSeason.name || `Episode ${nextInSeason.episode_number}`,
+      is_series_end: false,
+    };
+  }
+
+  // 2. If at the end of the season, check if a next season exists on the TV show
+  const seasons = (item.seasons || []).filter(
+    (s) => Number(s.season_number) > 0
+  );
+  const nextSeasonObj = seasons.find(
+    (s) => Number(s.season_number) === currentSeason + 1
+  );
+  if (nextSeasonObj) {
+    return {
+      season: currentSeason + 1,
+      episode: 1,
+      episode_name: `S${currentSeason + 1} E1`,
+      is_series_end: false,
+    };
+  }
+
+  // If episodes array is not loaded, advance to next episode number
+  if (!episodes.length) {
+    return {
+      season: currentSeason,
+      episode: currentEpNum + 1,
+      episode_name: `Episode ${currentEpNum + 1}`,
+      is_series_end: false,
+    };
+  }
+
+  // 3. Reached end of series
+  return {
+    season: currentSeason,
+    episode: currentEpNum,
+    episode_name: "",
+    is_series_end: true,
+  };
+}
+
+async function saveHistory(shouldRefresh = true, isEnded = false) {
   clearTimeout(historySaveTimer);
   const item = state.player.item;
   if (!item || !item.id) return;
   const episode = currentPlayerEpisode();
+
+  const duration = Number(state.player.duration) || 0;
+  const currentTime = Number(state.player.currentTime) || 0;
+  const isOver = isEnded || (duration > 0 && currentTime >= duration * 0.90);
+
+  let seasonToSave = state.player.season || 1;
+  let episodeToSave = state.player.episode || 1;
+  let episodeNameToSave = episode?.name || "";
+  let progressToSave = currentTime;
+  let durationToSave = duration;
+
+  let nextPayload = {};
+  if (item.media_type === "tv" && isOver) {
+    const next = getNextTvEpisode();
+    if (next && !next.is_series_end) {
+      seasonToSave = next.season;
+      episodeToSave = next.episode;
+      episodeNameToSave = next.episode_name || `Episode ${next.episode}`;
+      progressToSave = 0;
+      durationToSave = 0;
+      nextPayload = {
+        is_ended: true,
+        next_season: next.season,
+        next_episode: next.episode,
+        next_episode_name: episodeNameToSave,
+      };
+    } else {
+      nextPayload = {
+        is_ended: true,
+        is_series_end: true,
+      };
+      progressToSave = duration || 100;
+      durationToSave = duration || 100;
+    }
+  }
+
   const payload = {
     id: item.id,
     media_type: item.media_type,
@@ -321,11 +413,12 @@ async function saveHistory(shouldRefresh = true) {
     year: item.year || "",
     vote_average: item.vote_average || 0,
     overview: item.overview || "",
-    season: state.player.season || 1,
-    episode: state.player.episode || 1,
-    episode_name: episode?.name || "",
-    progress_seconds: state.player.currentTime || 0,
-    duration_seconds: state.player.duration || 0,
+    season: seasonToSave,
+    episode: episodeToSave,
+    episode_name: episodeNameToSave,
+    progress_seconds: progressToSave,
+    duration_seconds: durationToSave,
+    ...nextPayload,
   };
   try {
     const res = await fetch("/api/history", {
@@ -773,17 +866,25 @@ function buildRow(row) {
   const track = makeEl("div", "row-track");
 
   row.items.forEach((item, index) => {
-    const resumeLabel =
-      row.continue && item.media_type === "tv" ? `Resume S${item.season || 1} E${item.episode || 1}` : null;
+    const isTv = item.media_type === "tv";
     const duration = Number(item.duration_seconds) || 0;
-    const progress = duration > 0 ? ((Number(item.progress_seconds) || 0) / duration) * 100 : 0;
+    const progressSeconds = Number(item.progress_seconds) || 0;
+    const progress = duration > 0 ? (progressSeconds / duration) * 100 : 0;
+    let resumeLabel = null;
+    if (row.continue && isTv) {
+      if (progressSeconds === 0) {
+        resumeLabel = `Next: S${item.season || 1} E${item.episode || 1}`;
+      } else {
+        resumeLabel = `Resume S${item.season || 1} E${item.episode || 1}`;
+      }
+    }
     const card = createCard(item, {
       rank: row.rank ? index + 1 : null,
       resumeAt: row.continue
         ? {
             season: item.season || 1,
             episode: item.episode || 1,
-            startAt: Number(item.progress_seconds) || 0,
+            startAt: progressSeconds,
           }
         : null,
       resumeLabel: resumeLabel || (row.continue ? "Continue watching" : null),
@@ -2697,6 +2798,20 @@ if (lumiereVideo) {
     syncNativePlayButton();
     saveHistory(false);
   });
+  lumiereVideo.addEventListener("ended", () => {
+    syncNativePlayButton();
+    saveHistory(true, true);
+    if (state.player.item && state.player.item.media_type === "tv") {
+      const episodes = state.player.episodes || [];
+      const index = episodes.findIndex((ep) => ep.episode_number === Number(state.player.episode));
+      if (index >= 0 && index < episodes.length - 1) {
+        state.player.episode = episodes[index + 1].episode_number;
+        if (playerEpisode) playerEpisode.value = String(state.player.episode);
+        showToast(`Next Episode: S${state.player.season} E${state.player.episode}`);
+        updatePlayerSource();
+      }
+    }
+  });
   lumiereVideo.addEventListener("timeupdate", () => {
     const cur = Number(lumiereVideo.currentTime) || 0;
     const dur = Number(lumiereVideo.duration) || 0;
@@ -3017,7 +3132,9 @@ window.addEventListener("message", (event) => {
 
   const eventName = data.event || "";
   const now = Date.now();
-  if (eventName === "pause" || eventName === "seeked" || eventName === "ended") {
+  if (eventName === "ended") {
+    saveHistory(true, true);
+  } else if (eventName === "pause" || eventName === "seeked") {
     saveHistory(false);
   } else if (now - lastProgressPersist > 15000) {
     lastProgressPersist = now;
