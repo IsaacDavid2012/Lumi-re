@@ -187,7 +187,7 @@ const state = {
   browse: { view: "movies", type: "movie", category: "popular", page: 1, totalPages: 1, items: [], requestId: 0 },
   player: {
     item: null,
-    server: "s1",
+    server: "native",
     directStream: null,
     seasons: [],
     episodes: [],
@@ -2435,7 +2435,7 @@ async function openPlayer(item, season = 1, episode = 1, startAt = 0) {
   state.detail = state.detail && state.detail.id === title.id ? { ...state.detail, ...title } : title;
   state.player = {
     item: title,
-    server: playerServer && playerServer.value ? playerServer.value : "s1",
+    server: playerServer && playerServer.value ? playerServer.value : "native",
     seasons: title.seasons || [],
     episodes: [],
     season,
