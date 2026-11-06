@@ -2277,11 +2277,10 @@ async function updatePlayerSource(forceTakeover = false) {
   loadSubtitlesForCurrentTitle();
   startSubtitleClock();
 
-  const useNative =
-    state.player.directStream &&
-    state.player.server === "native";
+  const useNative = Boolean(state.player.directStream);
 
   function fallbackToIframe() {
+    // Only used as absolute last resort if no direct stream is extracted
     stopNativeVideo();
     if (lumiereNativeStage) lumiereNativeStage.hidden = true;
     if (lumiereControls) lumiereControls.hidden = true;
@@ -2297,28 +2296,11 @@ async function updatePlayerSource(forceTakeover = false) {
     player.src = playerUrl(item, state.player.season, state.player.episode, startAt);
   }
 
-  function canBrowserPlayHevc() {
-    const v = document.createElement("video");
-    return Boolean(
-      v.canPlayType('video/mp4; codecs="hev1.1.6.L93.90"') ||
-      v.canPlayType('video/mp4; codecs="hevc"')
-    );
-  }
-
   if (useNative && lumiereNativeStage && lumiereVideo) {
     state.player.server = "native";
     if (playerServer) playerServer.value = "native";
 
     const stream = state.player.directStream;
-    if (stream.type === "dash" && !canBrowserPlayHevc()) {
-      showToast("Your browser does not support HEVC hardware playback. Streaming via Server 1...");
-      fallbackToIframe();
-      state.player.startAt = 0;
-      syncPlayerNav();
-      queueHistorySave();
-      return;
-    }
-
     player.src = "about:blank";
     player.hidden = true;
     if (iframeClickShield) iframeClickShield.hidden = true;
@@ -2334,11 +2316,20 @@ async function updatePlayerSource(forceTakeover = false) {
     if (stream.type === "dash" && window.dashjs && typeof dashjs.supportsMediaSource === "function" && dashjs.supportsMediaSource()) {
       try {
         const dp = dashjs.MediaPlayer().create();
+        dp.updateSettings({
+          streaming: {
+            lowLatencyEnabled: false,
+            buffer: {
+              fastSwitchEnabled: true,
+              stableBufferTime: 12,
+              bufferTimeAtTopQuality: 20
+            }
+          }
+        });
         dp.initialize(lumiereVideo, stream.url, true);
         window.lumiereDashPlayer = dp;
         dp.on(dashjs.MediaPlayer.events.ERROR, (e) => {
-          console.warn("DASH player error, fallback to mirror:", e);
-          fallbackToIframe();
+          console.warn("DASH player event:", e);
         });
         if (startAt > 1) {
           dp.on(dashjs.MediaPlayer.events.STREAM_INITIALIZED, () => {
@@ -2356,13 +2347,13 @@ async function updatePlayerSource(forceTakeover = false) {
       played = true;
     }
 
-    if (!played) {
-      fallbackToIframe();
-    } else {
+    if (played) {
       syncNativePlayButton();
       bumpControlsVisibility();
     }
   } else {
+    // If no stream extracted, show notification and keep native cinema stage ready
+    showToast("Resolving Ad-Free Cinema Stream...");
     fallbackToIframe();
   }
 
@@ -2416,7 +2407,7 @@ async function loadPlayerSeason(seasonNumber, episodeToSelect = 1) {
     : episodes[0]?.episode_number || 1;
   state.player.episode = validEpisode;
   playerEpisode.value = String(validEpisode);
-  updatePlayerSource();
+  await updatePlayerSource();
 }
 
 async function openPlayer(item, season = 1, episode = 1, startAt = 0) {
@@ -2436,6 +2427,7 @@ async function openPlayer(item, season = 1, episode = 1, startAt = 0) {
   state.player = {
     item: title,
     server: playerServer && playerServer.value ? playerServer.value : "native",
+    directStream: null,
     seasons: title.seasons || [],
     episodes: [],
     season,
@@ -2466,7 +2458,7 @@ async function openPlayer(item, season = 1, episode = 1, startAt = 0) {
     playerEpisodeControls.hidden = true;
     state.player.seasons = [];
     state.player.episodes = [];
-    updatePlayerSource();
+    await updatePlayerSource();
   }
 
   if (!playerDialog.open) playerDialog.showModal();
