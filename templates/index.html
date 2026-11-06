@@ -285,6 +285,11 @@
           </select>
         </label>
 
+        <button type="button" class="shield-badge-btn" id="shieldToggleBtn" title="Lumière AdShield intercepts clicks to block popup ads">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+          <span id="shieldStatusText">Shield ON</span>
+        </button>
+
         <div class="player-episode-controls" id="playerEpisodeControls" hidden>
           <button type="button" class="icon-btn" id="prevEpisodeBtn" title="Previous episode" aria-label="Previous episode">
             <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="15 18 9 12 15 6"></polyline></svg>
@@ -396,42 +401,9 @@
         <span>{{ site_name_upper }} CINEMA</span>
       </div>
 
-      <!-- Native First-Party Lumière Video Engine -->
+      <!-- Native First-Party Lumière Video Engine (Used for direct streams) -->
       <div class="lumiere-native-stage" id="lumiereNativeStage" hidden>
         <video id="lumiereVideo" playsinline preload="metadata" crossorigin="anonymous"></video>
-        <button type="button" class="lumiere-center-play" id="lumiereCenterPlay" aria-label="Play or pause">
-          <svg width="30" height="30" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><polygon points="6 3 21 12 6 21 6 3"></polygon></svg>
-        </button>
-        <div class="lumiere-controls" id="lumiereControls">
-          <div class="lumiere-timeline-row">
-            <input type="range" class="lumiere-timeline" id="lumiereTimeline" min="0" max="1000" value="0" aria-label="Seek timeline">
-          </div>
-          <div class="lumiere-Deck">
-            <div class="lumiere-deck-left">
-              <button type="button" class="icon-btn" id="lumierePlayBtn" aria-label="Play or pause">
-                <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><polygon points="6 3 21 12 6 21 6 3"></polygon></svg>
-              </button>
-              <button type="button" class="icon-btn" id="lumiereRewBtn" title="Rewind 10s" aria-label="Rewind 10 seconds">-10s</button>
-              <button type="button" class="icon-btn" id="lumiereFwdBtn" title="Forward 10s" aria-label="Forward 10 seconds">+10s</button>
-              <button type="button" class="icon-btn" id="lumiereMuteBtn" aria-label="Mute or unmute">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>
-              </button>
-              <input type="range" class="lumiere-volume" id="lumiereVolumeSlider" min="0" max="1" step="0.05" value="1" aria-label="Volume">
-              <span class="lumiere-time-label" id="lumiereTimeLabel">00:00 / 00:00</span>
-            </div>
-            <div class="lumiere-deck-right">
-              <span class="lumiere-quality-badge" id="lumiereQualityBadge">1080p FULL HD</span>
-              <select id="lumiereSpeedSelect" class="lumiere-speed-select" aria-label="Playback speed" title="Playback speed">
-                <option value="0.75">0.75x</option>
-                <option value="1" selected>1.0x</option>
-                <option value="1.25">1.25x</option>
-                <option value="1.5">1.5x</option>
-                <option value="2">2.0x</option>
-              </select>
-              <button type="button" class="icon-btn" id="lumierePipBtn" title="Picture in Picture" aria-label="Picture in Picture">PiP</button>
-            </div>
-          </div>
-        </div>
       </div>
 
       <!-- Cinema Stream Frame -->
@@ -441,9 +413,49 @@
         referrerpolicy="strict-origin-when-cross-origin"
         title="{{ site_name }} Cinema Player"></iframe>
 
+      <!-- AdShield Click Interceptor (Intercepts all clicks over the player to prevent popup ads) -->
+      <div class="iframe-click-shield" id="iframeClickShield" title="Click to Play/Pause (Double-click for Fullscreen)"></div>
+
+      <!-- Central Play/Pause Flash Overlay -->
+      <button type="button" class="lumiere-center-play" id="lumiereCenterPlay" aria-label="Play or pause">
+        <svg width="34" height="34" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><polygon points="6 3 21 12 6 21 6 3"></polygon></svg>
+      </button>
+
       <!-- Universal Lumière Subtitle Overlay (Works on BOTH Native Video & Stream 1-4) -->
       <div class="lumiere-subtitle-overlay" id="lumiereSubtitleOverlay" aria-live="off" hidden>
         <span class="lumiere-subtitle-cue" id="lumiereSubtitleText"></span>
+      </div>
+
+      <!-- Universal Lumière Control Deck (Controls both Native Engine & Stream 1-4) -->
+      <div class="lumiere-controls" id="lumiereControls">
+        <div class="lumiere-timeline-row">
+          <input type="range" class="lumiere-timeline" id="lumiereTimeline" min="0" max="1000" value="0" aria-label="Seek timeline">
+        </div>
+        <div class="lumiere-Deck">
+          <div class="lumiere-deck-left">
+            <button type="button" class="icon-btn" id="lumierePlayBtn" aria-label="Play or pause" title="Play / Pause (Space)">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><polygon points="6 3 21 12 6 21 6 3"></polygon></svg>
+            </button>
+            <button type="button" class="icon-btn" id="lumiereRewBtn" title="Rewind 10s (Left Arrow)" aria-label="Rewind 10 seconds">-10s</button>
+            <button type="button" class="icon-btn" id="lumiereFwdBtn" title="Forward 10s (Right Arrow)" aria-label="Forward 10 seconds">+10s</button>
+            <button type="button" class="icon-btn" id="lumiereMuteBtn" aria-label="Mute or unmute" title="Mute / Unmute (M)">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>
+            </button>
+            <input type="range" class="lumiere-volume" id="lumiereVolumeSlider" min="0" max="1" step="0.05" value="1" aria-label="Volume">
+            <span class="lumiere-time-label" id="lumiereTimeLabel">00:00 / 00:00</span>
+          </div>
+          <div class="lumiere-deck-right">
+            <span class="lumiere-quality-badge" id="lumiereQualityBadge">1080p FULL HD</span>
+            <select id="lumiereSpeedSelect" class="lumiere-speed-select" aria-label="Playback speed" title="Playback speed">
+              <option value="0.75">0.75x</option>
+              <option value="1" selected>1.0x</option>
+              <option value="1.25">1.25x</option>
+              <option value="1.5">1.5x</option>
+              <option value="2">2.0x</option>
+            </select>
+            <button type="button" class="icon-btn" id="lumierePipBtn" title="Picture in Picture" aria-label="Picture in Picture">PiP</button>
+          </div>
+        </div>
       </div>
 
       <!-- Concurrent Stream Limit Blocker (Max 3 Streams per Account) -->

@@ -119,6 +119,9 @@ const lumiereTimeLabel = $("lumiereTimeLabel");
 const lumiereQualityBadge = $("lumiereQualityBadge");
 const lumiereSpeedSelect = $("lumiereSpeedSelect");
 const lumierePipBtn = $("lumierePipBtn");
+const iframeClickShield = $("iframeClickShield");
+const shieldToggleBtn = $("shieldToggleBtn");
+const shieldStatusText = $("shieldStatusText");
 
 const adminStreamBtn = $("adminStreamBtn");
 const adminStreamBar = $("adminStreamBar");
@@ -193,6 +196,9 @@ const state = {
     startAt: 0,
     currentTime: 0,
     duration: 0,
+    isPaused: false,
+    shieldEnabled: true,
+    prevVolume: 1,
     requestId: 0,
     heartbeatTimer: null,
   },
@@ -1678,16 +1684,208 @@ function stopNativeVideo() {
   }
 }
 
-function syncNativePlayButton() {
-  if (!lumiereVideo || !lumierePlayBtn) return;
-  const paused = lumiereVideo.paused;
-  lumierePlayBtn.innerHTML = paused
-    ? '<svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><polygon points="6 3 21 12 6 21 6 3"></polygon></svg>'
-    : '<svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="4" width="4" height="16" rx="1"></rect><rect x="14" y="4" width="4" height="16" rx="1"></rect></svg>';
+let controlsInactivityTimer = null;
+
+function bumpControlsVisibility() {
+  if (!playerFrameWrap) return;
+  playerFrameWrap.classList.remove("controls-hidden");
+  clearTimeout(controlsInactivityTimer);
+
+  if (state.player.isPaused) return;
+
+  controlsInactivityTimer = setTimeout(() => {
+    if (!state.player.isPaused && playerDialog && playerDialog.open) {
+      playerFrameWrap.classList.add("controls-hidden");
+    }
+  }, 3500);
+}
+
+function syncPlayButtonUI(isPlaying) {
+  state.player.isPaused = !isPlaying;
+  if (lumierePlayBtn) {
+    lumierePlayBtn.innerHTML = isPlaying
+      ? '<svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="4" width="4" height="16" rx="1"></rect><rect x="14" y="4" width="4" height="16" rx="1"></rect></svg>'
+      : '<svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><polygon points="6 3 21 12 6 21 6 3"></polygon></svg>';
+    lumierePlayBtn.setAttribute("title", isPlaying ? "Pause (Space)" : "Play (Space)");
+  }
   if (lumiereCenterPlay) {
-    lumiereCenterPlay.classList.toggle("visible", paused);
+    lumiereCenterPlay.classList.toggle("visible", !isPlaying);
+  }
+  if (!isPlaying) {
+    bumpControlsVisibility();
   }
 }
+
+function syncNativePlayButton() {
+  if (!lumiereVideo) return;
+  syncPlayButtonUI(!lumiereVideo.paused);
+}
+
+function updateTimelineUI(currentTime, duration) {
+  const cur = Number(currentTime) || 0;
+  const dur = Number(duration) || 0;
+  if (lumiereTimeline && dur > 0) {
+    lumiereTimeline.value = String(Math.round((cur / dur) * 1000));
+  }
+  if (lumiereTimeLabel) {
+    lumiereTimeLabel.textContent = `${formatTimestamp(cur)} / ${dur > 0 ? formatTimestamp(dur) : "--:--"}`;
+  }
+  renderActiveSubtitleCue();
+}
+
+function sendPlayerCommand(command, val = null) {
+  if (!player || !player.contentWindow) return;
+  const target = "*";
+
+  try {
+    if (command === "play") {
+      player.contentWindow.postMessage({ command: "play" }, target);
+      player.contentWindow.postMessage({ type: "play" }, target);
+      player.contentWindow.postMessage({ event: "play" }, target);
+      player.contentWindow.postMessage({ action: "play" }, target);
+      player.contentWindow.postMessage("play", target);
+    } else if (command === "pause") {
+      player.contentWindow.postMessage({ command: "pause" }, target);
+      player.contentWindow.postMessage({ type: "pause" }, target);
+      player.contentWindow.postMessage({ event: "pause" }, target);
+      player.contentWindow.postMessage({ action: "pause" }, target);
+      player.contentWindow.postMessage("pause", target);
+    } else if (command === "seek") {
+      const time = Math.max(0, Number(val) || 0);
+      player.contentWindow.postMessage({ command: "seek", time: time }, target);
+      player.contentWindow.postMessage({ type: "seek", time: time, data: time }, target);
+      player.contentWindow.postMessage({ event: "seek", time: time }, target);
+      player.contentWindow.postMessage({ action: "seek", time: time }, target);
+    } else if (command === "volume") {
+      const vol = Math.max(0, Math.min(1, Number(val) || 0));
+      player.contentWindow.postMessage({ command: "volume", level: vol, volume: vol }, target);
+      player.contentWindow.postMessage({ type: "volume", data: vol, level: vol }, target);
+    } else if (command === "speed") {
+      const rate = Number(val) || 1;
+      player.contentWindow.postMessage({ command: "speed", rate: rate, speed: rate }, target);
+      player.contentWindow.postMessage({ type: "speed", data: rate, rate: rate }, target);
+    }
+  } catch (err) {
+    console.warn("Could not dispatch postMessage to player iframe:", err);
+  }
+}
+
+function triggerPlayPause() {
+  const useNative = state.player.server === "native" && !lumiereNativeStage.hidden;
+  if (useNative && lumiereVideo) {
+    if (lumiereVideo.paused) {
+      lumiereVideo.play().catch(() => {});
+      syncPlayButtonUI(true);
+    } else {
+      lumiereVideo.pause();
+      syncPlayButtonUI(false);
+    }
+  } else {
+    const willPlay = state.player.isPaused;
+    state.player.isPaused = !willPlay;
+    sendPlayerCommand(willPlay ? "play" : "pause");
+    syncPlayButtonUI(willPlay);
+  }
+
+  if (lumiereCenterPlay) {
+    lumiereCenterPlay.classList.remove("pulse");
+    void lumiereCenterPlay.offsetWidth;
+    lumiereCenterPlay.classList.add("pulse");
+  }
+  bumpControlsVisibility();
+}
+
+function seekRelative(deltaSeconds) {
+  const useNative = state.player.server === "native" && !lumiereNativeStage.hidden;
+  const current = Number(state.player.currentTime) || 0;
+  const duration = Number(state.player.duration) || 0;
+  const target = Math.max(0, duration > 0 ? Math.min(duration, current + deltaSeconds) : current + deltaSeconds);
+  state.player.currentTime = target;
+
+  if (useNative && lumiereVideo) {
+    lumiereVideo.currentTime = target;
+  } else {
+    sendPlayerCommand("seek", target);
+  }
+
+  updateTimelineUI(target, duration);
+  bumpControlsVisibility();
+}
+
+function seekToPercentage(ratio) {
+  const duration = Number(state.player.duration) || 0;
+  if (duration <= 0) return;
+  const target = Math.max(0, Math.min(duration, ratio * duration));
+  state.player.currentTime = target;
+
+  const useNative = state.player.server === "native" && !lumiereNativeStage.hidden;
+  if (useNative && lumiereVideo) {
+    lumiereVideo.currentTime = target;
+  } else {
+    sendPlayerCommand("seek", target);
+  }
+
+  updateTimelineUI(target, duration);
+  bumpControlsVisibility();
+}
+
+function setPlayerVolume(volume) {
+  const v = Math.max(0, Math.min(1, Number(volume) || 0));
+  if (lumiereVolumeSlider) lumiereVolumeSlider.value = String(v);
+
+  const useNative = state.player.server === "native" && !lumiereNativeStage.hidden;
+  if (useNative && lumiereVideo) {
+    lumiereVideo.volume = v;
+    lumiereVideo.muted = v === 0;
+  } else {
+    sendPlayerCommand("volume", v);
+  }
+
+  if (lumiereMuteBtn) {
+    lumiereMuteBtn.classList.toggle("active", v === 0);
+  }
+  bumpControlsVisibility();
+}
+
+function togglePlayerMute() {
+  const currentVol = Number(lumiereVolumeSlider?.value || 1);
+  if (currentVol > 0) {
+    state.player.prevVolume = currentVol;
+    setPlayerVolume(0);
+  } else {
+    setPlayerVolume(state.player.prevVolume || 1);
+  }
+}
+
+async function togglePlayerFullscreen() {
+  try {
+    if (document.fullscreenElement) {
+      await document.exitFullscreen();
+    } else if (playerFrameWrap && playerFrameWrap.requestFullscreen) {
+      await playerFrameWrap.requestFullscreen();
+    }
+  } catch (error) {
+    showToast("Fullscreen is not available in this browser.");
+  }
+}
+
+function advanceToNextTvEpisode() {
+  if (!state.player.item || state.player.item.media_type !== "tv") return;
+  const episodes = state.player.episodes || [];
+  const index = episodes.findIndex((ep) => ep.episode_number === Number(state.player.episode));
+  if (index >= 0 && index < episodes.length - 1) {
+    const nextEp = episodes[index + 1];
+    state.player.episode = nextEp.episode_number;
+    if (playerEpisode) playerEpisode.value = String(state.player.episode);
+    showToast(`Next Episode: S${state.player.season} E${state.player.episode} · ${nextEp.name || ''}`);
+    updatePlayerSource();
+  } else {
+    showToast("Season completed!");
+  }
+}
+
+window.state = state;
+window.advanceToNextTvEpisode = advanceToNextTvEpisode;
 
 // ---------------------------------------------------------------------------
 // Universal Lumière Subtitles Studio
@@ -2087,9 +2285,18 @@ async function updatePlayerSource(forceTakeover = false) {
     stopNativeVideo();
     if (lumiereNativeStage) lumiereNativeStage.hidden = true;
     player.hidden = false;
+    if (iframeClickShield) {
+      iframeClickShield.hidden = false;
+      iframeClickShield.classList.toggle("disabled", !state.player.shieldEnabled);
+    }
     state.player.server = "s1";
     if (playerServer) playerServer.value = "s1";
     player.src = playerUrl(item, state.player.season, state.player.episode, startAt);
+    if (lumiereQualityBadge) {
+      lumiereQualityBadge.textContent = "1080p FULL HD";
+    }
+    syncPlayButtonUI(true);
+    bumpControlsVisibility();
   }
 
   function canBrowserPlayHevc() {
@@ -2116,6 +2323,7 @@ async function updatePlayerSource(forceTakeover = false) {
 
     player.src = "about:blank";
     player.hidden = true;
+    if (iframeClickShield) iframeClickShield.hidden = true;
     lumiereNativeStage.hidden = false;
     if (lumiereQualityBadge) {
       lumiereQualityBadge.textContent = (state.player.directStream.quality_label || "1080p FULL HD").toUpperCase();
@@ -2152,6 +2360,7 @@ async function updatePlayerSource(forceTakeover = false) {
       fallbackToIframe();
     } else {
       syncNativePlayButton();
+      bumpControlsVisibility();
     }
   } else {
     fallbackToIframe();
@@ -2234,7 +2443,9 @@ async function openPlayer(item, season = 1, episode = 1, startAt = 0) {
     startAt: Number(startAt) || 0,
     currentTime: Number(startAt) || 0,
     duration: 0,
-    requestId: state.player.requestId + 1,
+    isPaused: false,
+    shieldEnabled: state.player?.shieldEnabled !== false,
+    requestId: (state.player?.requestId || 0) + 1,
   };
 
   playerTitle.textContent = displayTitle(title);
@@ -2811,6 +3022,8 @@ playerDialog.addEventListener("close", () => {
   releaseStreamSlot();
   stopSubtitleClock();
   stopNativeVideo();
+  clearTimeout(controlsInactivityTimer);
+  if (playerFrameWrap) playerFrameWrap.classList.remove("controls-hidden");
   if (streamLimitOverlay) streamLimitOverlay.hidden = true;
   if (subtitlePopover) subtitlePopover.hidden = true;
   if (adminStreamBar) adminStreamBar.hidden = true;
@@ -2835,100 +3048,177 @@ window.addEventListener("pagehide", () => {
   }
 });
 
-// Native Lumière Video Controls
-if (lumiereVideo) {
-  const togglePlay = () => {
-    if (lumiereVideo.paused) {
-      lumiereVideo.play().catch(() => {});
-    } else {
-      lumiereVideo.pause();
+// Universal Lumière Video & Iframe Controls
+if (lumiereCenterPlay) {
+  lumiereCenterPlay.addEventListener("click", (e) => {
+    e.stopPropagation();
+    triggerPlayPause();
+  });
+}
+
+if (lumierePlayBtn) {
+  lumierePlayBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    triggerPlayPause();
+  });
+}
+
+if (lumiereRewBtn) {
+  lumiereRewBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    seekRelative(-10);
+  });
+}
+
+if (lumiereFwdBtn) {
+  lumiereFwdBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    seekRelative(10);
+  });
+}
+
+if (lumiereMuteBtn) {
+  lumiereMuteBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    togglePlayerMute();
+  });
+}
+
+if (lumiereVolumeSlider) {
+  lumiereVolumeSlider.addEventListener("input", (e) => {
+    setPlayerVolume(Number(e.target.value));
+  });
+}
+
+if (lumiereSpeedSelect) {
+  lumiereSpeedSelect.addEventListener("change", (e) => {
+    const rate = Number(e.target.value) || 1;
+    if (lumiereVideo && !lumiereNativeStage.hidden) {
+      lumiereVideo.playbackRate = rate;
     }
-    syncNativePlayButton();
-  };
-  lumiereVideo.addEventListener("click", togglePlay);
-  if (lumiereCenterPlay) lumiereCenterPlay.addEventListener("click", togglePlay);
-  if (lumierePlayBtn) lumierePlayBtn.addEventListener("click", togglePlay);
-  lumiereVideo.addEventListener("play", syncNativePlayButton);
+    sendPlayerCommand("speed", rate);
+    bumpControlsVisibility();
+  });
+}
+
+if (lumiereTimeline) {
+  lumiereTimeline.addEventListener("input", (e) => {
+    seekToPercentage(Number(e.target.value) / 1000);
+  });
+}
+
+if (lumierePipBtn) {
+  lumierePipBtn.addEventListener("click", async () => {
+    try {
+      if (document.pictureInPictureElement) {
+        await document.exitPictureInPicture();
+      } else if (lumiereVideo && lumiereVideo.requestPictureInPicture && !lumiereNativeStage.hidden) {
+        await lumiereVideo.requestPictureInPicture();
+      } else {
+        showToast("Picture-in-Picture is only available for native direct streams");
+      }
+    } catch (err) {
+      showToast("Picture-in-Picture unavailable");
+    }
+  });
+}
+
+// Click Shield — Intercepts all clicks over the embedded player
+if (iframeClickShield) {
+  let shieldClickTimer = null;
+  iframeClickShield.addEventListener("click", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (shieldClickTimer) {
+      clearTimeout(shieldClickTimer);
+      shieldClickTimer = null;
+      togglePlayerFullscreen();
+    } else {
+      shieldClickTimer = setTimeout(() => {
+        shieldClickTimer = null;
+        triggerPlayPause();
+      }, 250);
+    }
+  });
+}
+
+// AdShield Toggle Button
+if (shieldToggleBtn) {
+  shieldToggleBtn.addEventListener("click", () => {
+    state.player.shieldEnabled = !state.player.shieldEnabled;
+    if (iframeClickShield) {
+      iframeClickShield.classList.toggle("disabled", !state.player.shieldEnabled);
+    }
+    shieldToggleBtn.classList.toggle("off", !state.player.shieldEnabled);
+    if (shieldStatusText) {
+      shieldStatusText.textContent = state.player.shieldEnabled ? "Shield ON" : "Shield OFF";
+    }
+    showToast(state.player.shieldEnabled ? "AdShield Active: Popup ads blocked" : "AdShield Paused: Direct iframe touch enabled");
+  });
+}
+
+// Control Bar Auto-Hide on Inactivity
+if (playerFrameWrap) {
+  playerFrameWrap.addEventListener("mousemove", bumpControlsVisibility);
+  playerFrameWrap.addEventListener("mouseenter", bumpControlsVisibility);
+  playerFrameWrap.addEventListener("mouseleave", () => {
+    if (!state.player.isPaused && playerDialog && playerDialog.open) {
+      playerFrameWrap.classList.add("controls-hidden");
+    }
+  });
+}
+
+// Native Video Events
+if (lumiereVideo) {
+  lumiereVideo.addEventListener("click", triggerPlayPause);
+  lumiereVideo.addEventListener("play", () => syncPlayButtonUI(true));
   lumiereVideo.addEventListener("pause", () => {
-    syncNativePlayButton();
+    syncPlayButtonUI(false);
     saveHistory(false);
   });
   lumiereVideo.addEventListener("ended", () => {
-    syncNativePlayButton();
+    syncPlayButtonUI(false);
     saveHistory(true, true);
-    if (state.player.item && state.player.item.media_type === "tv") {
-      const episodes = state.player.episodes || [];
-      const index = episodes.findIndex((ep) => ep.episode_number === Number(state.player.episode));
-      if (index >= 0 && index < episodes.length - 1) {
-        state.player.episode = episodes[index + 1].episode_number;
-        if (playerEpisode) playerEpisode.value = String(state.player.episode);
-        showToast(`Next Episode: S${state.player.season} E${state.player.episode}`);
-        updatePlayerSource();
-      }
-    }
+    advanceToNextTvEpisode();
   });
   lumiereVideo.addEventListener("timeupdate", () => {
     const cur = Number(lumiereVideo.currentTime) || 0;
     const dur = Number(lumiereVideo.duration) || 0;
     state.player.currentTime = cur;
     state.player.duration = dur;
-    if (lumiereTimeline && dur > 0) {
-      lumiereTimeline.value = String(Math.round((cur / dur) * 1000));
-    }
-    if (lumiereTimeLabel) {
-      lumiereTimeLabel.textContent = `${formatTimestamp(cur)} / ${formatTimestamp(dur)}`;
-    }
-    renderActiveSubtitleCue();
+    updateTimelineUI(cur, dur);
   });
-  if (lumiereTimeline) {
-    lumiereTimeline.addEventListener("input", () => {
-      const dur = Number(lumiereVideo.duration) || 0;
-      if (dur > 0) {
-        lumiereVideo.currentTime = (Number(lumiereTimeline.value) / 1000) * dur;
-      }
-    });
-  }
-  if (lumiereRewBtn) {
-    lumiereRewBtn.addEventListener("click", () => {
-      lumiereVideo.currentTime = Math.max(0, (Number(lumiereVideo.currentTime) || 0) - 10);
-    });
-  }
-  if (lumiereFwdBtn) {
-    lumiereFwdBtn.addEventListener("click", () => {
-      lumiereVideo.currentTime = (Number(lumiereVideo.currentTime) || 0) + 10;
-    });
-  }
-  if (lumiereMuteBtn) {
-    lumiereMuteBtn.addEventListener("click", () => {
-      lumiereVideo.muted = !lumiereVideo.muted;
-      lumiereMuteBtn.classList.toggle("active", lumiereVideo.muted);
-    });
-  }
-  if (lumiereVolumeSlider) {
-    lumiereVolumeSlider.addEventListener("input", () => {
-      lumiereVideo.volume = Number(lumiereVolumeSlider.value);
-      lumiereVideo.muted = lumiereVideo.volume === 0;
-    });
-  }
-  if (lumiereSpeedSelect) {
-    lumiereSpeedSelect.addEventListener("change", () => {
-      lumiereVideo.playbackRate = Number(lumiereSpeedSelect.value) || 1;
-    });
-  }
-  if (lumierePipBtn) {
-    lumierePipBtn.addEventListener("click", async () => {
-      try {
-        if (document.pictureInPictureElement) {
-          await document.exitPictureInPicture();
-        } else if (lumiereVideo.requestPictureInPicture) {
-          await lumiereVideo.requestPictureInPicture();
-        }
-      } catch (err) {
-        showToast("Picture-in-Picture unavailable");
-      }
-    });
-  }
 }
+
+// Keyboard Shortcuts for Player
+window.addEventListener("keydown", (e) => {
+  if (!playerDialog || !playerDialog.open) return;
+  const tag = (e.target?.tagName || "").toLowerCase();
+  if (tag === "input" || tag === "textarea" || tag === "select") return;
+
+  if (e.code === "Space" || e.key === "k" || e.key === "K") {
+    e.preventDefault();
+    triggerPlayPause();
+  } else if (e.code === "ArrowLeft" || e.key === "j" || e.key === "J") {
+    e.preventDefault();
+    seekRelative(-10);
+  } else if (e.code === "ArrowRight" || e.key === "l" || e.key === "L") {
+    e.preventDefault();
+    seekRelative(10);
+  } else if (e.code === "ArrowUp") {
+    e.preventDefault();
+    setPlayerVolume(Math.min(1, (Number(lumiereVolumeSlider?.value) || 1) + 0.1));
+  } else if (e.code === "ArrowDown") {
+    e.preventDefault();
+    setPlayerVolume(Math.max(0, (Number(lumiereVolumeSlider?.value) || 1) - 0.1));
+  } else if (e.key === "m" || e.key === "M") {
+    e.preventDefault();
+    togglePlayerMute();
+  } else if (e.key === "f" || e.key === "F") {
+    e.preventDefault();
+    togglePlayerFullscreen();
+  }
+});
 
 // Admin Direct Stream Bar
 if (adminStreamBtn && adminStreamBar) {
@@ -3143,19 +3433,9 @@ nextEpisodeBtn.addEventListener("click", () => {
   }
 });
 
-fullscreenBtn.addEventListener("click", async () => {
-  try {
-    if (document.fullscreenElement) {
-      await document.exitFullscreen();
-    } else if (playerFrameWrap.requestFullscreen) {
-      await playerFrameWrap.requestFullscreen();
-    }
-  } catch (error) {
-    showToast("Fullscreen is not available in this browser.");
-  }
-});
+fullscreenBtn.addEventListener("click", togglePlayerFullscreen);
 
-// VidFast playback progress (postMessage events)
+// VidFast playback progress & controls (postMessage events)
 const VIDFAST_HOST_RE = /(^|\.)vidfast\.(vc|pro|in|io|me|net|pm|xyz|bz)$/i;
 let lastProgressPersist = 0;
 
@@ -3181,15 +3461,28 @@ window.addEventListener("message", (event) => {
   if (Number.isFinite(currentTime) && currentTime >= 0) {
     state.player.currentTime = currentTime;
     state.subtitles.lastExternalSync = Date.now();
-    renderActiveSubtitleCue();
   }
-  if (Number.isFinite(duration) && duration > 0) state.player.duration = duration;
+  if (Number.isFinite(duration) && duration > 0) {
+    state.player.duration = duration;
+  }
 
-  const eventName = data.event || "";
+  // Sync timeline and time labels on Lumière control deck
+  updateTimelineUI(state.player.currentTime, state.player.duration);
+
+  const eventName = (data.event || "").toLowerCase();
   const now = Date.now();
-  if (eventName === "ended") {
+  if (eventName === "play" || eventName === "playing") {
+    syncPlayButtonUI(true);
+  } else if (eventName === "pause") {
+    syncPlayButtonUI(false);
+    saveHistory(false);
+  } else if (eventName === "ended") {
+    syncPlayButtonUI(false);
     saveHistory(true, true);
-  } else if (eventName === "pause" || eventName === "seeked") {
+    if (state.player.item && state.player.item.media_type === "tv") {
+      advanceToNextTvEpisode();
+    }
+  } else if (eventName === "seeked") {
     saveHistory(false);
   } else if (now - lastProgressPersist > 15000) {
     lastProgressPersist = now;

@@ -3724,13 +3724,67 @@ body.login-page {
   background: #000;
 }
 
+/* AdShield Click Interceptor */
+.iframe-click-shield {
+  position: absolute;
+  inset: 0;
+  z-index: 8;
+  cursor: pointer;
+  background: transparent;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.iframe-click-shield.disabled {
+  pointer-events: none;
+  display: none;
+}
+
+.shield-badge-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 32px;
+  padding: 0 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(16, 185, 129, 0.5);
+  background: rgba(16, 185, 129, 0.12);
+  color: #34d399;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.shield-badge-btn:hover {
+  background: rgba(16, 185, 129, 0.22);
+  border-color: rgba(16, 185, 129, 0.8);
+}
+
+.shield-badge-btn.off {
+  border-color: rgba(245, 158, 11, 0.5);
+  background: rgba(245, 158, 11, 0.12);
+  color: #fbbf24;
+}
+
+.shield-badge-btn.off:hover {
+  background: rgba(245, 158, 11, 0.22);
+  border-color: rgba(245, 158, 11, 0.8);
+}
+
 .lumiere-center-play {
   position: absolute;
-  width: 68px;
-  height: 68px;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(0.9);
+  width: 72px;
+  height: 72px;
   border-radius: 50%;
-  border: 2px solid rgba(255, 255, 255, 0.4);
-  background: rgba(229, 9, 20, 0.86);
+  border: 2px solid rgba(255, 255, 255, 0.45);
+  background: rgba(229, 9, 20, 0.9);
   color: #fff;
   display: flex;
   align-items: center;
@@ -3738,15 +3792,39 @@ body.login-page {
   cursor: pointer;
   opacity: 0;
   pointer-events: none;
-  transform: scale(0.9);
-  transition: opacity 0.18s ease, transform 0.18s ease;
+  transition: opacity 0.2s ease, transform 0.2s ease, background 0.2s ease;
   box-shadow: 0 14px 36px rgba(0, 0, 0, 0.7);
+  z-index: 15;
 }
 
 .lumiere-center-play.visible {
   opacity: 1;
   pointer-events: auto;
-  transform: scale(1);
+  transform: translate(-50%, -50%) scale(1);
+}
+
+.lumiere-center-play:hover {
+  background: rgba(229, 9, 20, 1);
+  transform: translate(-50%, -50%) scale(1.08);
+}
+
+.lumiere-center-play.pulse {
+  animation: centerPlayPulse 0.45s ease-out forwards;
+}
+
+@keyframes centerPlayPulse {
+  0% {
+    opacity: 0.9;
+    transform: translate(-50%, -50%) scale(0.85);
+  }
+  50% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.18);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(1.35);
+  }
 }
 
 .lumiere-controls {
@@ -3754,11 +3832,24 @@ body.login-page {
   left: 0;
   right: 0;
   bottom: 0;
-  padding: 18px 18px 14px;
-  background: linear-gradient(180deg, transparent 0%, rgba(5, 6, 10, 0.85) 45%, rgba(5, 6, 10, 0.96) 100%);
+  padding: 22px 20px 14px;
+  background: linear-gradient(180deg, transparent 0%, rgba(5, 6, 10, 0.88) 38%, rgba(5, 6, 10, 0.98) 100%);
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
+  z-index: 20;
+  transition: opacity 0.25s ease, transform 0.25s ease;
+  pointer-events: auto;
+}
+
+.player-frame.controls-hidden .lumiere-controls {
+  opacity: 0;
+  transform: translateY(8px);
+  pointer-events: none;
+}
+
+.player-frame.controls-hidden {
+  cursor: none;
 }
 
 .lumiere-timeline {
