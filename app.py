@@ -7,14 +7,17 @@ VidFast player, multi-user accounts, autosaved Continue Watching history,
 and hardened session authentication.
 """
 
+import base64
 import hashlib
 import hmac
 import ipaddress
 import json
+import logging
 import os
 import re
 import secrets
 import sqlite3
+import struct
 import threading
 import time
 import urllib.parse
@@ -24,15 +27,24 @@ from datetime import timedelta
 from functools import wraps
 from flask import (
     Flask,
+    Response,
     jsonify,
     redirect,
     render_template,
     request,
     send_from_directory,
     session,
+    stream_with_context,
     url_for,
 )
 from werkzeug.security import check_password_hash, generate_password_hash
+
+try:
+    import nacl.secret
+    from curl_cffi import requests as curl_requests
+    HAVE_NATIVE_EXTRACTOR = True
+except ImportError:
+    HAVE_NATIVE_EXTRACTOR = False
 
 app = Flask(__name__)
 
@@ -4656,6 +4668,174 @@ def _parse_vtt_cues(vtt_text: str) -> list:
     return cues
 
 
+# ==========================================================================
+# Lumière Native Stream Extraction & DASH Proxy Engine (100% Ad-Free)
+# ==========================================================================
+
+VIDLINK_KEY_HEX = "c75136c5668bbfe65a7ecad431a745db68b5f381555b38d8f6c699449cf11fcd"
+VIDLINK_KEY = bytes.fromhex(VIDLINK_KEY_HEX)
+VIDLINK_NONCE = bytes(24)
+
+_dash_stream_cache = {}  # session_id -> {base_url, manifest_url, headers, expires_at}
+_dash_stream_lock = threading.Lock()
+
+
+def _encrypt_vidlink_token(media_id: str) -> str:
+    if not HAVE_NATIVE_EXTRACTOR:
+        return ""
+    try:
+        box = nacl.secret.SecretBox(VIDLINK_KEY)
+        timestamp = int(time.time() + 480)
+        message = str(media_id).encode("utf-8") + struct.pack(">Q", timestamp)
+        encrypted = box.encrypt(message, VIDLINK_NONCE)
+        full_payload = VIDLINK_NONCE + encrypted.ciphertext
+        return base64.urlsafe_b64encode(full_payload).decode("utf-8").rstrip("=")
+    except Exception as e:
+        logging.warning("Failed to encrypt token: %s", e)
+        return ""
+
+
+def resolve_native_stream(media_type: str, tmdb_id: int, season: int = 1, episode: int = 1):
+    """Extract direct DASH stream from VidLink API without showing any ads or popups."""
+    if not HAVE_NATIVE_EXTRACTOR:
+        return None
+    try:
+        token = _encrypt_vidlink_token(str(tmdb_id))
+        if not token:
+            return None
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36",
+            "Origin": "https://vidlink.pro",
+            "Referer": "https://vidlink.pro/",
+            "x-playback-environment": "webkit",
+        }
+        if media_type == "tv":
+            url = f"https://vidlink.pro/api/b/tv/{token}/{season}/{episode}?multiLang=1"
+        else:
+            url = f"https://vidlink.pro/api/b/movie/{token}?multiLang=1"
+
+        res = curl_requests.get(url, headers=headers, impersonate="chrome110", timeout=12)
+        if res.status_code != 200:
+            return None
+        data = res.json()
+        if not isinstance(data, dict):
+            return None
+        stream = data.get("stream")
+        if not isinstance(stream, dict):
+            return None
+
+        playlist_url = stream.get("playlist")
+        playlist_headers = stream.get("playlistHeaders") or {}
+        captions = stream.get("captions") or []
+
+        if playlist_url and playlist_headers:
+            session_id = secrets.token_urlsafe(18)
+            base_url = playlist_url.rsplit("/", 1)[0] + "/"
+            now = time.time()
+            with _dash_stream_lock:
+                # Prune expired sessions
+                for k in list(_dash_stream_cache.keys()):
+                    if _dash_stream_cache[k]["expires_at"] < now:
+                        del _dash_stream_cache[k]
+
+                _dash_stream_cache[session_id] = {
+                    "base_url": base_url,
+                    "manifest_url": playlist_url,
+                    "headers": {
+                        "User-Agent": headers["User-Agent"],
+                        "Referer": "https://vidlink.pro/",
+                        "Origin": "https://vidlink.pro",
+                        **playlist_headers,
+                    },
+                    "expires_at": now + 14400,  # 4 hour validity
+                }
+
+            return {
+                "type": "dash",
+                "url": f"/api/stream/dash/manifest?s={session_id}",
+                "session_id": session_id,
+                "quality_label": "1080p FULL HD (Ad-Free)",
+                "captions": captions,
+            }
+        return None
+    except Exception as e:
+        logging.warning("Error resolving native stream: %s", e)
+        return None
+
+
+@app.route("/api/stream/dash/manifest")
+@login_required
+def api_stream_dash_manifest():
+    session_id = str(request.args.get("s") or "").strip()
+    if not session_id:
+        return jsonify({"error": "Missing stream session"}), 400
+
+    with _dash_stream_lock:
+        sess = _dash_stream_cache.get(session_id)
+
+    if not sess or sess["expires_at"] < time.time():
+        return jsonify({"error": "Stream session expired or invalid"}), 404
+
+    try:
+        res = curl_requests.get(sess["manifest_url"], headers=sess["headers"], impersonate="chrome110", timeout=12)
+        if res.status_code != 200:
+            return jsonify({"error": "Upstream manifest error"}), 502
+
+        mpd_text = res.text
+        base_tag = f"<BaseURL>/api/stream/dash/segment?s={session_id}&amp;path=</BaseURL>"
+        modified_mpd = re.sub(r"(<MPD\b[^>]*>)", r"\1\n  " + base_tag, mpd_text, count=1)
+
+        response = Response(modified_mpd, mimetype="application/dash+xml")
+        response.headers["Access-Control-Allow-Origin"] = "*"
+        response.headers["Cache-Control"] = "no-cache, no-store"
+        return response
+    except Exception as e:
+        logging.warning("Manifest proxy error: %s", e)
+        return jsonify({"error": "Manifest generation error"}), 500
+
+
+@app.route("/api/stream/dash/segment")
+@login_required
+def api_stream_dash_segment():
+    session_id = str(request.args.get("s") or "").strip()
+    path = str(request.args.get("path") or "").strip()
+
+    if not session_id or not path:
+        return jsonify({"error": "Invalid segment request"}), 400
+
+    if not re.fullmatch(r"[A-Za-z0-9_\-\.%]+\.(?:m4s|mp4|webm)", path):
+        return jsonify({"error": "Invalid segment path"}), 400
+
+    with _dash_stream_lock:
+        sess = _dash_stream_cache.get(session_id)
+
+    if not sess or sess["expires_at"] < time.time():
+        return jsonify({"error": "Stream session expired or invalid"}), 404
+
+    target_url = sess["base_url"] + path
+    try:
+        upstream = curl_requests.get(target_url, headers=sess["headers"], stream=True, impersonate="chrome110", timeout=15)
+        def generate():
+            for chunk in upstream.iter_content(chunk_size=65536):
+                if chunk:
+                    yield chunk
+
+        resp = Response(
+            stream_with_context(generate()),
+            status=upstream.status_code,
+            content_type=upstream.headers.get("Content-Type", "video/iso.segment"),
+        )
+        cl = upstream.headers.get("Content-Length")
+        if cl:
+            resp.headers["Content-Length"] = cl
+        resp.headers["Access-Control-Allow-Origin"] = "*"
+        resp.headers["Cache-Control"] = "public, max-age=86400"
+        return resp
+    except Exception as e:
+        logging.warning("Segment proxy error: %s", e)
+        return jsonify({"error": "Segment transfer error"}), 502
+
+
 @app.route("/api/stream/<media_type>/<int:tmdb_id>", methods=["GET", "POST", "DELETE"])
 @login_required
 def api_custom_stream(media_type, tmdb_id):
@@ -4682,18 +4862,24 @@ def api_custom_stream(media_type, tmdb_id):
             (media_type, tmdb_id, season, episode),
         ).fetchone()
         conn.close()
-        if not row:
-            return jsonify({"has_direct_stream": False, "stream": None})
-        return jsonify(
-            {
-                "has_direct_stream": True,
-                "stream": {
-                    "url": row["stream_url"],
-                    "type": row["stream_type"] or "mp4",
-                    "quality_label": row["quality_label"] or "1080p Full HD",
-                },
-            }
-        )
+        if row:
+            return jsonify(
+                {
+                    "has_direct_stream": True,
+                    "stream": {
+                        "url": row["stream_url"],
+                        "type": row["stream_type"] or "mp4",
+                        "quality_label": row["quality_label"] or "1080p Full HD",
+                    },
+                }
+            )
+
+        # Auto-extract ad-free DASH stream via Lumière Cinema Engine
+        resolved = resolve_native_stream(media_type, tmdb_id, season, episode)
+        if resolved:
+            return jsonify({"has_direct_stream": True, "stream": resolved})
+
+        return jsonify({"has_direct_stream": False, "stream": None})
 
     if session.get("role") != "admin":
         return jsonify({"error": "Admin privileges required"}), 403

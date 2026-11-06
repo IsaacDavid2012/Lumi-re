@@ -184,7 +184,7 @@ const state = {
   browse: { view: "movies", type: "movie", category: "popular", page: 1, totalPages: 1, items: [], requestId: 0 },
   player: {
     item: null,
-    server: "s1",
+    server: "native",
     directStream: null,
     seasons: [],
     episodes: [],
@@ -1662,6 +1662,12 @@ function formatTimestamp(sec) {
 }
 
 function stopNativeVideo() {
+  if (window.lumiereDashPlayer) {
+    try {
+      window.lumiereDashPlayer.destroy();
+    } catch (e) {}
+    window.lumiereDashPlayer = null;
+  }
   if (!lumiereVideo) return;
   try {
     lumiereVideo.pause();
@@ -1892,7 +1898,6 @@ async function loadSubtitlesForCurrentTitle() {
 async function checkDirectStreamForCurrentTitle() {
   const item = state.player.item;
   state.player.directStream = null;
-  if (nativeStreamOption) nativeStreamOption.hidden = true;
   if (!item || !item.id) return null;
 
   const s = Number(state.player.season) || 1;
@@ -1903,7 +1908,7 @@ async function checkDirectStreamForCurrentTitle() {
       state.player.directStream = data.stream;
       if (nativeStreamOption) {
         nativeStreamOption.hidden = false;
-        nativeStreamOption.textContent = `Lumière Direct (${data.stream.quality_label || "1080p"})`;
+        nativeStreamOption.textContent = `Lumière Cinema Engine (${data.stream.quality_label || "1080p Ad-Free"})`;
       }
       if (adminStreamInput) adminStreamInput.value = data.stream.url;
       return data.stream;
@@ -2076,7 +2081,7 @@ async function updatePlayerSource(forceTakeover = false) {
 
   const useNative =
     state.player.directStream &&
-    (state.player.server === "native" || state.player.server === "s1");
+    (state.player.server === "native" || !state.player.server || state.player.server === "s1");
 
   if (useNative && lumiereNativeStage && lumiereVideo) {
     state.player.server = "native";
@@ -2087,9 +2092,27 @@ async function updatePlayerSource(forceTakeover = false) {
     if (lumiereQualityBadge) {
       lumiereQualityBadge.textContent = (state.player.directStream.quality_label || "1080p FULL HD").toUpperCase();
     }
-    lumiereVideo.src = state.player.directStream.url;
-    lumiereVideo.currentTime = startAt > 1 ? startAt : 0;
-    lumiereVideo.play().catch(() => {});
+    stopNativeVideo();
+
+    const stream = state.player.directStream;
+    if (stream.type === "dash" && window.dashjs) {
+      try {
+        const dp = dashjs.MediaPlayer().create();
+        dp.initialize(lumiereVideo, stream.url, true);
+        window.lumiereDashPlayer = dp;
+        if (startAt > 1) {
+          dp.on(dashjs.MediaPlayer.events.STREAM_INITIALIZED, () => {
+            dp.seek(startAt);
+          });
+        }
+      } catch (err) {
+        console.error("DASH init error:", err);
+      }
+    } else {
+      lumiereVideo.src = stream.url;
+      if (startAt > 1) lumiereVideo.currentTime = startAt;
+      lumiereVideo.play().catch(() => {});
+    }
     syncNativePlayButton();
   } else {
     stopNativeVideo();
@@ -2171,7 +2194,7 @@ async function openPlayer(item, season = 1, episode = 1, startAt = 0) {
   state.detail = state.detail && state.detail.id === title.id ? { ...state.detail, ...title } : title;
   state.player = {
     item: title,
-    server: playerServer ? playerServer.value : "s1",
+    server: playerServer && playerServer.value ? playerServer.value : "native",
     seasons: title.seasons || [],
     episodes: [],
     season,

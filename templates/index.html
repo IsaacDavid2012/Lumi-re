@@ -277,7 +277,7 @@
         <label class="select-field compact server-select-field" title="Switch stream source">
           <span>Source</span>
           <select id="playerServer" aria-label="Stream source">
-            <option value="native" id="nativeStreamOption" hidden>{{ site_name }} Direct (Native 1080p)</option>
+            <option value="native" id="nativeStreamOption" selected>{{ site_name }} Cinema Engine (Ad-Free Direct)</option>
             <option value="s1">{{ site_name }} Stream 1 (Primary)</option>
             <option value="s2">{{ site_name }} Stream 2 (Backup)</option>
             <option value="s3">{{ site_name }} Stream 3 (Mirror)</option>
@@ -555,6 +555,8 @@
   </footer>
 
   <script id="initialHomeData" type="application/json">{{ (initial_home or {}) | tojson }}</script>
+  <script src="/static/js/dash.all.min.js"></script>
+  <script src="/static/js/hls.min.js"></script>
   <script src="/static/js/app.js"></script>
 </body>
 
