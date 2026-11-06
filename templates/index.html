@@ -213,7 +213,10 @@
     <div class="detail-body">
       <div class="detail-main">
         <div class="detail-trailer-wrap" id="detailTrailerWrap" hidden>
-          <iframe id="detailTrailerFrame" src="about:blank" title="Official Trailer" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe>
+          <iframe id="detailTrailerFrame" src="about:blank" title="Official Trailer"
+            sandbox="allow-scripts allow-same-origin allow-presentation"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe>
         </div>
 
         <p class="detail-overview" id="detailOverview">Loading overview…</p>
@@ -431,9 +434,13 @@
         </div>
       </div>
 
-      <!-- Fallback White-Labeled Stream Frame -->
-      <iframe id="moviePlayer" src="about:blank" allowfullscreen allow="encrypted-media; picture-in-picture; autoplay"
-        referrerpolicy="strict-origin-when-cross-origin" title="{{ site_name }} Cinema Player"></iframe>
+      <!-- Sandboxed Cinema Stream Frame (Blocks Popups, New Tabs & Redirect Ads) -->
+      <iframe id="moviePlayer" src="about:blank"
+        sandbox="allow-scripts allow-same-origin allow-forms allow-presentation"
+        allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
+        allowfullscreen
+        referrerpolicy="strict-origin-when-cross-origin"
+        title="{{ site_name }} Cinema Player"></iframe>
 
       <!-- Universal Lumière Subtitle Overlay (Works on BOTH Native Video & Stream 1-4) -->
       <div class="lumiere-subtitle-overlay" id="lumiereSubtitleOverlay" aria-live="off" hidden>

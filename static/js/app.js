@@ -3034,6 +3034,53 @@ window.addEventListener(
   { passive: true }
 );
 
+// ==========================================
+// Lumière AdShield — Anti-Popup & Anti-Redirect Engine
+// ==========================================
+(function initAdShield() {
+  const originalWindowOpen = window.open;
+  window._isAuthorizedNavigation = false;
+
+  // Intercept and neutralize rogue popup attempts while streaming
+  window.open = function (url, target, features) {
+    if (playerDialog && playerDialog.open) {
+      console.warn("[Lumière AdShield] Neutralized popup window attempt:", url);
+      return null;
+    }
+    return originalWindowOpen.call(window, url, target, features);
+  };
+
+  // Prevent background popunder focus theft
+  window.addEventListener("blur", () => {
+    if (playerDialog && playerDialog.open) {
+      setTimeout(() => {
+        try {
+          window.focus();
+        } catch (e) {}
+      }, 50);
+    }
+  });
+
+  // Guard against top-window navigation hijack while player is open
+  window.addEventListener("beforeunload", (e) => {
+    if (playerDialog && playerDialog.open && !window._isAuthorizedNavigation) {
+      e.preventDefault();
+      return (e.returnValue = "Playback in progress. Stay on Lumière?");
+    }
+  });
+
+  // Mark intentional app navigations as authorized
+  document.addEventListener("click", (e) => {
+    const link = e.target.closest("a, form");
+    if (link) {
+      window._isAuthorizedNavigation = true;
+      setTimeout(() => {
+        window._isAuthorizedNavigation = false;
+      }, 2000);
+    }
+  });
+})();
+
 // Light dismiss for dialogs
 enableLightDismiss(detailDialog);
 enableLightDismiss(playerDialog);
