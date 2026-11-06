@@ -941,6 +941,30 @@ SUBSCRIPTION_EXEMPT_PREFIXES = (
 )
 
 
+def is_authenticated_user() -> bool:
+    username = session.get("user")
+    if not session.get("authenticated") or not username:
+        return False
+    login_at = int(session.get("login_at") or 0)
+    if login_at <= 0 or (time.time() - login_at) > MAX_SESSION_AGE_SECONDS:
+        return False
+    expected_ua = session.get("ua_hash")
+    if expected_ua and not hmac.compare_digest(str(expected_ua), _ua_fingerprint()):
+        return False
+    try:
+        conn = get_db()
+        row = conn.execute(
+            "SELECT COALESCE(auth_version, 0) AS auth_version FROM auth_users WHERE username = ?",
+            (username,),
+        ).fetchone()
+        conn.close()
+        if not row or int(row["auth_version"] or 0) != int(session.get("auth_version", 0)):
+            return False
+    except Exception:
+        return False
+    return True
+
+
 def login_required(f):
     @wraps(f)
     def decorated(*args, **kwargs):
@@ -1154,8 +1178,13 @@ def download_app_file(filename):
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
-    if session.get("authenticated") and session.get("user"):
+    if is_authenticated_user():
         return redirect(url_for("index"))
+
+    # If the user has a stale, expired, or invalid session, clear it now
+    # to prevent a redirect loop between /login and /
+    if session.get("authenticated") or session.get("user"):
+        session.clear()
 
     if request.method == "GET":
         warm_home_catalog_async()
@@ -1251,8 +1280,11 @@ def logout():
 
 @app.route("/signup", methods=["GET", "POST"])
 def signup():
-    if session.get("authenticated") and session.get("user"):
+    if is_authenticated_user():
         return redirect(url_for("index"))
+
+    if session.get("authenticated") or session.get("user"):
+        session.clear()
 
     ip = get_client_ip()
     error = None
@@ -2403,30 +2435,6 @@ def _get_active_profile(username):
     return first, profiles
 
 
-def is_authenticated_user() -> bool:
-    username = session.get("user")
-    if not session.get("authenticated") or not username:
-        return False
-    login_at = int(session.get("login_at") or 0)
-    if login_at <= 0 or (time.time() - login_at) > MAX_SESSION_AGE_SECONDS:
-        return False
-    expected_ua = session.get("ua_hash")
-    if expected_ua and not hmac.compare_digest(str(expected_ua), _ua_fingerprint()):
-        return False
-    try:
-        conn = get_db()
-        row = conn.execute(
-            "SELECT COALESCE(auth_version, 0) AS auth_version FROM auth_users WHERE username = ?",
-            (username,),
-        ).fetchone()
-        conn.close()
-        if not row or int(row["auth_version"] or 0) != int(session.get("auth_version", 0)):
-            return False
-    except Exception:
-        return False
-    return True
-
-
 def _get_landing_posters():
     try:
         conn = get_db()
@@ -2461,6 +2469,8 @@ def render_landing():
 @app.route("/")
 def index():
     if not is_authenticated_user():
+        if session.get("authenticated") or session.get("user"):
+            session.clear()
         return render_landing()
     return show_catalog()
 
@@ -2474,6 +2484,9 @@ def browse():
 @app.route("/landing")
 @app.route("/welcome")
 def landing():
+    if not is_authenticated_user():
+        if session.get("authenticated") or session.get("user"):
+            session.clear()
     return render_landing()
 
 
